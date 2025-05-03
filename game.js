@@ -96,52 +96,6 @@ export function initBoard() {
   return board;
 }
 
-// ui.js
-// export function renderBoard(board) {
-//   // 删除旧棋盘
-//   const oldBoard = document.getElementById("chessBoard");
-//   if (oldBoard) oldBoard.remove();
-
-//   // 创建新棋盘
-//   const table = document.createElement("table");
-//   table.id = "chessBoard";
-//   table.style.borderCollapse = "collapse";
-//   table.style.margin = "20px auto";
-
-//   const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
-//   const ranks = [8, 7, 6, 5, 4, 3, 2, 1]; // 白方视角：1 在底部
-
-//   for (const rank of ranks) {
-//     const row = document.createElement("tr");
-//     for (let f = 0; f < 8; f++) {
-//       const file = files[f];
-//       const pos = file + rank;
-//       const cell = document.createElement("td");
-//       cell.style.width = "50px";
-//       cell.style.height = "50px";
-//       cell.style.textAlign = "center";
-//       cell.style.verticalAlign = "middle";
-//       cell.style.fontSize = "24px";
-//       cell.style.cursor = "pointer";
-
-//       // 设置背景色
-//       const isDark = (f + rank) % 2 === 1;
-//       cell.style.backgroundColor = isDark ? "#769656" : "#eeeed2";
-
-//       // 放置棋子文字（可替换成图标）
-//       if (board[pos]) {
-//         const piece = board[pos];
-//         cell.textContent = getPieceSymbol(piece.type, piece.color);
-//       }
-
-//       row.appendChild(cell);
-//     }
-//     table.appendChild(row);
-//   }
-
-//   document.body.appendChild(table);
-// }
-
 export function renderBoard(board, currentColor) {
   const oldBoard = document.getElementById("chessBoard");
   if (oldBoard) oldBoard.remove();
@@ -151,10 +105,11 @@ export function renderBoard(board, currentColor) {
   table.style.borderCollapse = "collapse";
   table.style.margin = "20px auto";
 
-  const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
-  const ranks = [8, 7, 6, 5, 4, 3, 2, 1];
+  const files = ['a','b','c','d','e','f','g','h'];
+  const ranks = [8,7,6,5,4,3,2,1];
 
   let selected = null;
+  let highlighted = [];
 
   for (const rank of ranks) {
     const row = document.createElement("tr");
@@ -172,21 +127,36 @@ export function renderBoard(board, currentColor) {
       cell.style.cursor = "pointer";
 
       const isDark = (f + rank) % 2 === 1;
-      cell.style.backgroundColor = isDark ? "#769656" : "#eeeed2";
+      const baseColor = isDark ? "#769656" : "#eeeed2";
+      cell.style.backgroundColor = baseColor;
 
+      // 设置棋子文本
       if (board[pos]) {
         const piece = board[pos];
         cell.textContent = getPieceSymbol(piece.type, piece.color);
       }
 
-      // 添加点击事件
+      // 点击事件
       cell.onclick = () => {
+        // 清除所有高亮
+        clearHighlights();
+
         if (!selected && board[pos] && board[pos].color === currentColor) {
           selected = pos;
           cell.style.border = "2px solid red";
+
+          // 🔍 计算并高亮所有可走位置
+          const moves = getValidMoves(pos, board[pos], board);
+          for (const m of moves) {
+            const targetCell = document.querySelector(`[data-pos="${m}"]`);
+            if (targetCell) {
+              targetCell.style.backgroundColor = "#baca44"; // 高亮绿色
+              highlighted.push(targetCell);
+            }
+          }
+
         } else if (selected) {
-          console.log("Selected:", selected, "Target:", pos);
-          onMove(selected, pos); // 发起移动回调
+          onMove(selected, pos); // 触发移动逻辑
           selected = null;
         }
       };
@@ -197,6 +167,19 @@ export function renderBoard(board, currentColor) {
   }
 
   document.body.appendChild(table);
+
+  function clearHighlights() {
+    for (const cell of highlighted) {
+      const pos = cell.dataset.pos;
+      const fileIndex = files.indexOf(pos[0]);
+      const rankNum = parseInt(pos[1]);
+      const isDark = (fileIndex + rankNum) % 2 === 1;
+      cell.style.backgroundColor = isDark ? "#769656" : "#eeeed2";
+    }
+    highlighted = [];
+    const allCells = table.querySelectorAll("td");
+    allCells.forEach(c => c.style.border = "none");
+  }
 }
 
 function getPieceSymbol(type, color) {
@@ -210,33 +193,6 @@ function getPieceSymbol(type, color) {
   };
   return symbols[type]?.[color] || "?";
 }
-
-
-// // 初始化棋盘状态（白方调用）
-// export function initGameState(initBoardFunc) {
-//   board = initBoardFunc();  // 使用传入的初始化函数
-//   turn = "white";
-//   return { board, turn };
-// }
-
-// // 本地执行走子，更新状态并返回新状态
-// export function makeMove(from, to) {
-//   board[to] = board[from];
-//   delete board[from];
-//   turn = turn === "white" ? "black" : "white";
-//   return { board, turn };
-// }
-
-// // 应用对方同步来的状态（覆盖本地）
-// export function applyState(state) {
-//   board = state.board;
-//   turn = state.turn;
-// }
-
-// // 获取当前游戏状态（用于发给对方）
-// export function getState() {
-//   return { board, turn };
-// }
 
 function onMove(from, to) {
   if (!myTurn) return;
