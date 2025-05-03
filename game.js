@@ -1,5 +1,5 @@
 // game.js
-import { isValidMove, isGameOver } from './rules.js';
+import { isValidMove } from './rules.js';
 import { selectKing } from './hiddenking.js';
 import { roomId, myTurn } from './main.js'; // 引入 roomId
 import { sendState } from './firebase.js'; // 引入 sendState 函数

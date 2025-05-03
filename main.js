@@ -3,6 +3,7 @@ import { initGame, movePiece, getGameState, applyGameState, checkGameOver } from
 import { onBothKingsSelected } from './firebase.js';
 import { renderBoard } from './game.js';
 import { initBoard, board, turn, playerColor} from './game.js'; // 假设你用这个初始化函数
+import { checkVictoryCondition } from './rules.js'; 
 
 // Store global variables for the game state
 export let roomId = null;
@@ -51,7 +52,15 @@ document.getElementById('joinBtn').onclick = async () => {
     applyGameState(gameState); // 应用 game 下的状态
     myTurn = gameState.turn === playerColor;
     renderBoard(gameState.board, playerColor);
+
+    const winner = checkVictoryCondition(gameState.board, hiddenKings);
+    if (winner) {
+      alert(`${winner.toUpperCase()} wins!`);
+      // 可选：禁用进一步点击，比如通过设置 myTurn = false
+    }
   });
+
+  
 
   });
   
