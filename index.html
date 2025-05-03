@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Hidden King Chess</title>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+  <!-- 引入 main.js -->
+  <script type="module" src="./main.js"></script>
+</head>
+<body>
+  <h1>Hidden King Chess</h1>
+
+  <div>
+    <input id="roomInput" placeholder="Enter Room ID" />
+    <button id="joinBtn">Join Room</button>
+  </div>
+
+  <div id="status">Not connected.</div>
+  <div id="stateView"></div>
+
+
+</body>
+</html>
