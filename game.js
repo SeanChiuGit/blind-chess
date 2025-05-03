@@ -1,5 +1,5 @@
 // game.js
-import { isValidMove } from './rules.js';
+import { getValidMoves } from './rules.js';
 import { selectKing } from './hiddenking.js';
 import { roomId, myTurn } from './main.js'; // 引入 roomId
 import { sendState } from './firebase.js'; // 引入 sendState 函数
@@ -16,33 +16,26 @@ export function initGame(color) {
     selectKing(playerColor, board, roomId);
   }
 
-// export function movePiece(from, to) {
-//   const piece = board[from];
-//   if (piece && piece.color === turn && isValidMove(piece, from, to, board)) {
-//     board[to] = piece;
-//     delete board[from];
-//     turn = turn === 'white' ? 'black' : 'white';
-//   }
-// }
-
 export function movePiece(from, to) {
   const movingPiece = board[from];
   const targetPiece = board[to];
 
-  // 非当前方，或没有棋子不能移动
   if (!movingPiece || movingPiece.color !== turn) return false;
 
   // 不允许吃自己人
   if (targetPiece && targetPiece.color === turn) return false;
 
-  // ✅ 执行移动（允许走到空格或吃对方）
+  // 🔍 新增：判断走法是否合法
+  const validMoves = getValidMoves(from, movingPiece, board);
+  if (!validMoves.includes(to)) return false;
+
+  // ✅ 执行移动
   board[to] = movingPiece;
   delete board[from];
 
   // ✅ 轮换回合
   turn = turn === "white" ? "black" : "white";
 
-  // 返回用于同步的状态
   return { board, turn };
 }
 
