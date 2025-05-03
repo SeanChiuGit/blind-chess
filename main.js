@@ -33,7 +33,7 @@ document.getElementById('joinBtn').onclick = async () => {
     console.log("双方都已选定隐藏国王：", hiddenKings);
     // console.log(playerColor);
     // console.log(color);
-    renderBoard(board); 
+    renderBoard(board, hiddenKings[playerColor]); // 渲染棋盘
 
     // 白方初始化棋盘
   if (playerColor === "white"){
@@ -51,7 +51,7 @@ document.getElementById('joinBtn').onclick = async () => {
     console.log("接收到远程状态：", gameState);
     applyGameState(gameState); // 应用 game 下的状态
     myTurn = gameState.turn === playerColor;
-    renderBoard(gameState.board, playerColor);
+    renderBoard(gameState.board, playerColor, hiddenKings[playerColor]);
 
     const winner = checkVictoryCondition(gameState.board, hiddenKings);
     if (winner) {

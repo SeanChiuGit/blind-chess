@@ -1,19 +1,3 @@
-// firebase.js
-// let db, roomRef;
-
-// export function initFirebase() {
-//   // 初始化 Firebase SDK（你需在 HTML 中引入 Firebase 并初始化配置）
-// }
-
-// export function createOrJoinRoom(roomId, callback) {
-//   // 创建或加入房间，设置监听器
-//   // 示例：roomRef = firebase.database().ref('rooms/' + roomId);
-//   // 监听对方状态变化：roomRef.on('value', snapshot => callback(snapshot.val()));
-// }
-
-// export function sendState(state) {
-//   roomRef.set(state);
-// }
 
 export function onStateChange(callback) {
   roomRef.on('value', snapshot => callback(snapshot.val()));

@@ -96,7 +96,7 @@ export function initBoard() {
   return board;
 }
 
-export function renderBoard(board, currentColor) {
+export function renderBoard(board, currentColor, hiddenKingId = null) {
   const oldBoard = document.getElementById("chessBoard");
   if (oldBoard) oldBoard.remove();
 
@@ -134,6 +134,11 @@ export function renderBoard(board, currentColor) {
       if (board[pos]) {
         const piece = board[pos];
         cell.textContent = getPieceSymbol(piece.type, piece.color);
+
+        // ✅ 高亮本方隐藏国王
+        if (piece.id === hiddenKingId) {
+          cell.textContent = "★" + getPieceSymbol(piece.type, piece.color);
+        }
       }
 
       // 点击事件
