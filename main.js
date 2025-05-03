@@ -25,7 +25,7 @@ document.getElementById('joinBtn').onclick = async () => {
   document.getElementById("status").innerText = `你是 ${color} 方 (${slot})`;
 
   createOrJoinRoom(roomId, (state) => {
-    document.getElementById("stateView").innerText = "Synced state:\n" + JSON.stringify(state, null, 2);
+    // document.getElementById("stateView").innerText = "Synced state:\n" + JSON.stringify(state, null, 2);
   });
 
   initGame(color); // 🎮 初始化棋盘并开始“选隐藏国王”界面
