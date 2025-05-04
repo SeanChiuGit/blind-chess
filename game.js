@@ -36,7 +36,7 @@ export function movePiece(from, to) {
   // ✅ 轮换回合
   turn = turn === "white" ? "black" : "white";
 
-  return { board, turn };
+  return { board, turn, lastMove: { from, to } };
 }
 
 export function getGameState() {
@@ -96,7 +96,7 @@ export function initBoard() {
   return board;
 }
 
-export function renderBoard(board, currentColor, hiddenKingId = null, hiddenOpponent = false)
+export function renderBoard(board, currentColor, hiddenKingId = null, hiddenOpponent = false, lastMove = null)
 {
   const oldBoard = document.getElementById("chessBoard");
   if (oldBoard) oldBoard.remove();

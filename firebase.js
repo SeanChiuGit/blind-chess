@@ -3,7 +3,7 @@ export function onStateChange(callback) {
   roomRef.on('value', snapshot => callback(snapshot.val()));
 }
 
-let db, roomRef;
+export let db, roomRef;
 
 export function initFirebase() {
     const firebaseConfig = {
@@ -29,10 +29,27 @@ export function createOrJoinRoom(roomId, onData) {
 }
 
 export function sendState(state) {
-  console.log("Sending state:", state);
-  if (roomRef) {
-    roomRef.update({ game: state }); // 只更新 game 字段
-  }
+  if (!roomRef) return;
+
+  roomRef.child("game").transaction((current) => {
+    if (!current) current = {};
+    // 初始化历史数组
+    if (!current.history) current.history = [];
+
+    const nextState = {
+      board: state.board,
+      turn: state.turn,
+      lastMove: state.lastMove || null
+    };
+
+    // 把这一步加入历史
+    current.history.push(nextState);
+    current.board = nextState.board;
+    current.turn = nextState.turn;
+    current.lastMove = nextState.lastMove;
+
+    return current;
+  });
 }
 
 export async function assignPlayerColor(roomId) {

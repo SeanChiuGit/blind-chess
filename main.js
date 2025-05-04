@@ -9,7 +9,7 @@ import { showModeButtons } from './ui.js';
 import { enterDarkChessSetup } from './darkChessSetup.js'; 
 import { selectKing } from './hiddenking.js'; // 假设你有一个函数来选择隐藏国王
 import { onBothSetupsReady } from './firebase.js';
-
+import { playReplay } from './replay.js'; // 假设你有一个函数来播放复盘
 
 
 
@@ -129,6 +129,8 @@ document.getElementById('joinBtn').onclick = async () => {
           if (winner) {
             alert(`${winner.toUpperCase()} wins!`);
             myTurn = false;
+          
+            showReplayButton(); // ✅ 添加复盘按钮
           }
         });
       });
@@ -140,3 +142,10 @@ document.getElementById('joinBtn').onclick = async () => {
   });
 
 };
+
+function showReplayButton() {
+  const btn = document.createElement("button");
+  btn.textContent = "🎬 查看复盘";
+  btn.onclick = playReplay;
+  document.body.appendChild(btn);
+}
