@@ -123,11 +123,11 @@ export function renderBoard(board, currentColor, hiddenKingId = null, hiddenOppo
       const cell = document.createElement("td");
       cell.dataset.pos = pos;
 
-      cell.style.width = "50px";
-      cell.style.height = "50px";
+      cell.style.width = "80px";
+      cell.style.height = "80px";
       cell.style.textAlign = "center";
       cell.style.verticalAlign = "middle";
-      cell.style.fontSize = "24px";
+      cell.style.fontSize = "40px";
       cell.style.cursor = "pointer";
 
       const isDark = (f + rank) % 2 === 1;
