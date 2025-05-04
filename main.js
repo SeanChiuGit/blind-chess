@@ -8,6 +8,10 @@ import { submitPlayerModeChoice, onBothModesSelectedAndMatched} from './firebase
 import { showModeButtons } from './ui.js';
 import { enterDarkChessSetup } from './darkChessSetup.js'; 
 import { selectKing } from './hiddenking.js'; // 假设你有一个函数来选择隐藏国王
+import { onBothSetupsReady } from './firebase.js';
+
+
+
 
 // Store global variables for the game state
 export let roomId = null;
@@ -30,7 +34,6 @@ document.getElementById('joinBtn').onclick = async () => {
   const { slot, color } = result;
   document.getElementById("status").innerText = `你是 ${color} 方 (${slot})`;
 
-  // 选择玩法
   createOrJoinRoom(roomId, (roomData) => {
   });
 
@@ -53,6 +56,7 @@ document.getElementById('joinBtn').onclick = async () => {
     console.log("游戏模式：", game_mode);
     initGame(color); // 🎮 初始化棋盘
 
+    // **********************************************************
     if (game_mode === "hidden_king") {
             console.log("游戏模式：隐藏国王");
 
@@ -91,11 +95,20 @@ document.getElementById('joinBtn').onclick = async () => {
         });
         });
 
-    } else if (game_mode === "blind_chess") {
+    } 
+    // **********************************************************
+    else if (game_mode === "blind_chess") {
       console.log("游戏模式：暗棋");
       enterDarkChessSetup(roomId, color); // 进入暗棋设置界面
-
-    } else {
+      onBothSetupsReady(roomId, (setups) => {
+        const mergedBoard = { ...setups.white, ...setups.black };
+        console.log("✅ 双方布局完成，进入游戏！");
+        // startDarkChessGame(mergedBoard);
+        renderBoard(board, playerColor, null, true); // 渲染棋盘
+      });
+    } 
+    // **********************************************************
+    else {
       console.error("未知的游戏模式！");
     }
   });

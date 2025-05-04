@@ -83,3 +83,13 @@ export function submitDarkChessSetup(roomId, playerColor, board) {
   const ref = firebase.database().ref(`rooms/${roomId}/setup/${playerColor}`);
   ref.set(board);
 }
+
+export function onBothSetupsReady(roomId, callback) {
+  const ref = firebase.database().ref(`rooms/${roomId}/setup`);
+  ref.on("value", snapshot => {
+    const setups = snapshot.val();
+    if (setups?.white && setups?.black) {
+      callback(setups); // 双方都提交了布局，启动游戏
+    }
+  });
+}

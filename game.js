@@ -96,7 +96,8 @@ export function initBoard() {
   return board;
 }
 
-export function renderBoard(board, currentColor, hiddenKingId = null) {
+export function renderBoard(board, currentColor, hiddenKingId = null, hiddenOpponent = false)
+{
   const oldBoard = document.getElementById("chessBoard");
   if (oldBoard) oldBoard.remove();
 
@@ -133,11 +134,17 @@ export function renderBoard(board, currentColor, hiddenKingId = null) {
       // 设置棋子文本
       if (board[pos]) {
         const piece = board[pos];
-        cell.textContent = getPieceSymbol(piece.type, piece.color);
-
-        // ✅ 高亮本方隐藏国王
-        if (piece.id === hiddenKingId) {
-          cell.textContent = "★" + getPieceSymbol(piece.type, piece.color);
+      
+        // 👀 若启用隐藏模式，且该棋子不是我方，隐藏它
+        const shouldHide = hiddenOpponent && piece.color !== currentColor;
+      
+        if (shouldHide) {
+          cell.textContent = "？"; // 或用空白 ""
+        } else {
+          cell.textContent = getPieceSymbol(piece.type, piece.color);
+          if (piece.id === hiddenKingId) {
+            cell.textContent = "★" + getPieceSymbol(piece.type, piece.color);
+          }
         }
       }
 

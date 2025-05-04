@@ -125,6 +125,13 @@ export function enterDarkChessSetup(roomId, playerColor) {
   }
 
   // ✅ 提交按钮
+  const randomBtn = document.createElement("button");
+  randomBtn.textContent = "🎲 随机布置";
+  randomBtn.onclick = () => {
+    randomizeSetup();
+  };
+  container.appendChild(randomBtn);
+
   const submitBtn = document.createElement("button");
   submitBtn.textContent = "✅ 提交我的棋子布局";
   submitBtn.onclick = () => {
@@ -133,4 +140,41 @@ export function enterDarkChessSetup(roomId, playerColor) {
     container.remove();
   };
   container.appendChild(submitBtn);
+
+
+  function randomizeSetup() {
+    // 清空棋盘与候选池
+    Object.keys(board).forEach(pos => delete board[pos]);
+    usedPieceIds.clear();
+    for (const id in piecePool) {
+      piecePoolDiv.appendChild(piecePool[id]);
+    }
+  
+    const emptyPositions = [];
+    for (const r of ranks) {
+      for (let f = 0; f < 8; f++) {
+        emptyPositions.push(files[f] + r);
+      }
+    }
+  
+    const shuffled = shuffleArray(emptyPositions).slice(0, 16);
+    pieceList.forEach((type, i) => {
+      const pos = shuffled[i];
+      const id = `${playerColor}_${i}`;
+      board[pos] = { type, color: playerColor, id };
+      usedPieceIds.add(id);
+      removePieceFromPool(id);
+    });
+  
+    updateBoardUI();
+  }
 }
+
+function shuffleArray(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
