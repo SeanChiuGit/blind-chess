@@ -79,7 +79,7 @@ export function onBothModesSelectedAndMatched(roomId, callback) {
   });
 }
 
-// export function submitDarkChessSetup(roomId, playerColor, board) {
-//   const ref = firebase.database().ref(`rooms/${roomId}/setup/${playerColor}`);
-//   ref.set(board);
-// }
+export function submitDarkChessSetup(roomId, playerColor, board) {
+  const ref = firebase.database().ref(`rooms/${roomId}/setup/${playerColor}`);
+  ref.set(board);
+}

@@ -6,6 +6,8 @@ import { initBoard, board, turn, playerColor} from './game.js'; // 假设你用�
 import { checkVictoryCondition } from './rules.js'; 
 import { submitPlayerModeChoice, onBothModesSelectedAndMatched} from './firebase.js';
 import { showModeButtons } from './ui.js';
+import { enterDarkChessSetup } from './darkChessSetup.js'; 
+import { selectKing } from './hiddenking.js'; // 假设你有一个函数来选择隐藏国王
 
 // Store global variables for the game state
 export let roomId = null;
@@ -49,10 +51,14 @@ document.getElementById('joinBtn').onclick = async () => {
   // startWithMode(mode);
     game_mode = mode;
     console.log("游戏模式：", game_mode);
+    initGame(color); // 🎮 初始化棋盘
+
     if (game_mode === "hidden_king") {
             console.log("游戏模式：隐藏国王");
 
-            initGame(color); // 🎮 初始化棋盘并开始“选隐藏国王”界面
+            // initGame(color); // 🎮 初始化棋盘并开始“选隐藏国王”界面
+            // 👑 启动选择隐藏国王界面
+        selectKing(playerColor, board, roomId);
         onBothKingsSelected(roomId, (hiddenKings) => {
           console.log("双方都已选定隐藏国王：", hiddenKings);
           // console.log(playerColor);
@@ -87,8 +93,8 @@ document.getElementById('joinBtn').onclick = async () => {
 
     } else if (game_mode === "blind_chess") {
       console.log("游戏模式：暗棋");
+      enterDarkChessSetup(roomId, color); // 进入暗棋设置界面
 
-      
     } else {
       console.error("未知的游戏模式！");
     }

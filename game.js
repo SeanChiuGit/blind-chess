@@ -12,8 +12,8 @@ export function initGame(color) {
     board = initBoard();
     turn = 'white';
   
-    // 👑 启动选择隐藏国王界面
-    selectKing(playerColor, board, roomId);
+    // // 👑 启动选择隐藏国王界面
+    // selectKing(playerColor, board, roomId);
   }
 
 export function movePiece(from, to) {
@@ -187,7 +187,7 @@ export function renderBoard(board, currentColor, hiddenKingId = null) {
   }
 }
 
-function getPieceSymbol(type, color) {
+export function getPieceSymbol(type, color) {
   const symbols = {
     pawn:   { white: "♙", black: "♟︎" },
     rook:   { white: "♖", black: "♜" },
