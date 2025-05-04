@@ -169,7 +169,16 @@ export function renderBoard(board, currentColor, hiddenKingId = null, hiddenOppo
           }
 
         } else if (selected) {
-          onMove(selected, pos); // 触发移动逻辑
+          const validMoves = getValidMoves(selected, board[selected], board);
+          if (!validMoves.includes(pos)) {
+            // ❌ 点击了非法格子
+            clearHighlights(); // 清除高亮
+            selected = null;   // 取消选中状态
+            return;
+          }
+        
+          // ✅ 合法走法才继续
+          onMove(selected, pos);
           selected = null;
         }
       };
@@ -223,5 +232,10 @@ function onMove(from, to) {
   if (!myTurn) return;
 
   const newState = movePiece(from, to);
-  sendState(newState);
+  if (!newState) {
+    console.warn("⛔ 无效走法，忽略发送");
+    return; // ❌ 不合法移动，不发状态
+  }
+
+  sendState(newState); // ✅ 只有合法移动才同步
 }
