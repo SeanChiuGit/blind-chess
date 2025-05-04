@@ -168,6 +168,7 @@ export function renderBoard(board, currentColor, hiddenKingId = null, hiddenOppo
             onMove(selected, pos);
             selected = null;
             clearHighlights();
+            return;
           } else {
           const existing = document.getElementById("guessMenu");
         
@@ -187,6 +188,7 @@ export function renderBoard(board, currentColor, hiddenKingId = null, hiddenOppo
         clearHighlights();
 
         if (!selected && board[pos] && board[pos].color === currentColor) {
+          if (!myTurn) return; // ❌ 非我方回合 → 不可选中
           selected = pos;
           cell.style.border = "2px solid red";
 
