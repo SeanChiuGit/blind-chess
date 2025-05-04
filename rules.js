@@ -6,14 +6,45 @@ export function setCustomGameOver(func) {
 }
 
 // 检查胜负函数
-export function checkVictoryCondition(board, hiddenKings) {
+export function checkVictoryCondition(board, mode = "classic", extra = {}) {
+  switch (mode) {
+    case "classic":
+      return checkClassicVictory(board);
+    case "hidden_king":
+      return checkHiddenKingVictory(board, extra.hiddenKings);
+    case "blind_chess":
+      // return checkBlindVictory(board);
+      return checkClassicVictory(board);
+    default:
+      console.warn("未知玩法模式，跳过胜负判断");
+      return null;
+  }
+}
+
+function checkClassicVictory(board) {
+  // 示例：某方 King 不在了就输
+  const kings = Object.values(board).filter(p => p.type === "king");
+  if (!kings.find(p => p.color === "white")) return "black";
+  if (!kings.find(p => p.color === "black")) return "white";
+  return null;
+}
+
+function checkHiddenKingVictory(board, hiddenKings) {
   const whiteAlive = Object.values(board).some(p => p.id === hiddenKings.white);
   const blackAlive = Object.values(board).some(p => p.id === hiddenKings.black);
-
   if (!whiteAlive) return "black";
   if (!blackAlive) return "white";
   return null;
 }
+
+function checkBlindVictory(board) {
+  const whiteLeft = Object.values(board).some(p => p.color === "white");
+  const blackLeft = Object.values(board).some(p => p.color === "black");
+  if (!whiteLeft) return "black";
+  if (!blackLeft) return "white";
+  return null;
+}
+
 
 // 计算某个棋子的所有合法走法
 export function getValidMoves(pos, piece, board) {

@@ -87,7 +87,7 @@ document.getElementById('joinBtn').onclick = async () => {
           myTurn = gameState.turn === playerColor;
           renderBoard(gameState.board, playerColor, hiddenKings[playerColor]);
 
-          const winner = checkVictoryCondition(gameState.board, hiddenKings);
+          const winner = checkVictoryCondition(gameState.board, "hidden_king", {hiddenKings});
           if (winner) {
             alert(`${winner.toUpperCase()} wins!`);
             // 可选：禁用进一步点击，比如通过设置 myTurn = false
@@ -103,8 +103,34 @@ document.getElementById('joinBtn').onclick = async () => {
       onBothSetupsReady(roomId, (setups) => {
         const mergedBoard = { ...setups.white, ...setups.black };
         console.log("✅ 双方布局完成，进入游戏！");
-        // startDarkChessGame(mergedBoard);
-        renderBoard(board, playerColor, null, true); // 渲染棋盘
+      
+        sendState({
+          board: mergedBoard,
+          turn: "white"
+        }); // ✅ 加上这句，上传正式对局状态
+      
+        // 本地预览第一次渲染（可选）
+        renderBoard(mergedBoard, playerColor, null, true);
+      
+        onStateChange((remoteState) => {
+          const gameState = remoteState?.game;
+          if (!gameState || !gameState.board) {
+            console.log("等待棋盘初始化...");
+            return;
+          }
+      
+          console.log("接收到远程状态：", gameState);
+          applyGameState(gameState);
+          myTurn = gameState.turn === playerColor;
+      
+          renderBoard(gameState.board, playerColor, null, true);
+      
+          const winner = checkVictoryCondition(gameState.board, "blind_chess");
+          if (winner) {
+            alert(`${winner.toUpperCase()} wins!`);
+            myTurn = false;
+          }
+        });
       });
     } 
     // **********************************************************
