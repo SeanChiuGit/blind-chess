@@ -62,4 +62,24 @@ export function onBothKingsSelected(roomId, callback) {
   });
 }
 
+export function submitPlayerModeChoice(roomId, playerSlot, mode) {
+  firebase.database().ref(`rooms/${roomId}/selections/${playerSlot}`).set(mode);
+}
 
+export function onBothModesSelectedAndMatched(roomId, callback) {
+  const ref = firebase.database().ref(`rooms/${roomId}/selections`);
+  ref.on("value", snapshot => {
+    const selections = snapshot.val();
+    if (selections?.player1 && selections?.player2) {
+      if (selections.player1 === selections.player2) {
+        callback(selections.player1); // 开始游戏
+      }
+      // ⚠️ 不一致时什么都不做
+    }
+  });
+}
+
+// export function submitDarkChessSetup(roomId, playerColor, board) {
+//   const ref = firebase.database().ref(`rooms/${roomId}/setup/${playerColor}`);
+//   ref.set(board);
+// }
