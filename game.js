@@ -144,7 +144,8 @@ export function renderBoard(board, currentColor, hiddenKingId = null, hiddenOppo
         if (shouldHide) {
           // ✅ 渲染本地猜测
           if (localGuesses[pos]) {
-            cell.textContent = getPieceSymbol(localGuesses[pos], currentColor); // 用己方颜色显示猜测
+            const opponentColor = currentColor === "white" ? "black" : "white";
+            cell.textContent = getPieceSymbol(localGuesses[pos], opponentColor); // 用己方颜色显示猜测
             cell.style.opacity = 0.4; // 可视化区别
           } else {
             cell.textContent = "？";
@@ -208,6 +209,7 @@ export function renderBoard(board, currentColor, hiddenKingId = null, hiddenOppo
             // ❌ 点击了非法格子
             clearHighlights(); // 清除高亮
             selected = null;   // 取消选中状态
+            renderBoard(board, currentColor, null, hiddenOpponent, lastMove);
             return;
           }
         
