@@ -3,8 +3,10 @@ import { getValidMoves } from './rules.js';
 import { selectKing } from './hiddenking.js';
 import { roomId, myTurn } from './main.js'; // 引入 roomId
 import { sendState } from './firebase.js'; // 引入 sendState 函数
+import { showGuessMenu, localGuesses } from './darkChessSetup.js'; // 引入 showGuessMenu 函数
 
 export let board, turn, playerColor;
+// export const localGuesses = {}; // { e4: "knight", g7: "queen" }
 
 export function initGame(color) {
   // TODO
@@ -140,7 +142,13 @@ export function renderBoard(board, currentColor, hiddenKingId = null, hiddenOppo
         const shouldHide = hiddenOpponent && piece.color !== currentColor;
       
         if (shouldHide) {
-          cell.textContent = "？"; // 或用空白 ""
+          // ✅ 渲染本地猜测
+          if (localGuesses[pos]) {
+            cell.textContent = getPieceSymbol(localGuesses[pos], currentColor); // 用己方颜色显示猜测
+            cell.style.opacity = 0.4; // 可视化区别
+          } else {
+            cell.textContent = "？";
+          }
         } else {
           cell.textContent = getPieceSymbol(piece.type, piece.color);
           if (piece.id === hiddenKingId) {
@@ -151,6 +159,30 @@ export function renderBoard(board, currentColor, hiddenKingId = null, hiddenOppo
 
       // 点击事件
       cell.onclick = () => {
+        const piece = board[pos];
+        const isOpponentHidden = hiddenOpponent && piece && piece.color !== currentColor;
+
+        if (isOpponentHidden) {
+          if (selected && board[selected] && board[selected].color === currentColor) {
+            // ✅ 当前选中了我方棋子 → 发起移动（吃掉对方）
+            onMove(selected, pos);
+            selected = null;
+            clearHighlights();
+          } else {
+          const existing = document.getElementById("guessMenu");
+        
+          // ✅ 如果菜单已存在且当前就是点击它的位置 → 收起
+          if (existing && existing.dataset.pos === pos) {
+            existing.remove();
+            return;
+          }
+        
+          // ✅ 否则显示新的
+          showGuessMenu(pos, board, currentColor, hiddenOpponent, lastMove);
+          return;
+        }
+        }
+
         // 清除所有高亮
         clearHighlights();
 
