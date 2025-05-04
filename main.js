@@ -123,7 +123,7 @@ document.getElementById('joinBtn').onclick = async () => {
           applyGameState(gameState);
           myTurn = gameState.turn === playerColor;
       
-          renderBoard(gameState.board, playerColor, null, true);
+          renderBoard(gameState.board, playerColor, null, true, gameState.lastMove);
       
           const winner = checkVictoryCondition(gameState.board, "blind_chess");
           if (winner) {

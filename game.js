@@ -112,6 +112,7 @@ export function renderBoard(board, currentColor, hiddenKingId = null, hiddenOppo
   let selected = null;
   let highlighted = [];
 
+  
   for (const rank of ranks) {
     const row = document.createElement("tr");
     for (let f = 0; f < 8; f++) {
@@ -174,8 +175,20 @@ export function renderBoard(board, currentColor, hiddenKingId = null, hiddenOppo
       };
 
       row.appendChild(cell);
+
+       // 高亮上一步的起点和终点
+    if (lastMove) {
+      if (pos === lastMove.from) {
+        cell.style.backgroundColor = "#fdd835"; // 淡黄，起点
+      }
+      if (pos === lastMove.to) {
+        // cell.innerHTML += " ➤"; // 或用 SVG 更美观
+        cell.style.backgroundColor = "#f44336"; // 红色，终点
+      }
+    }
     }
     table.appendChild(row);
+
   }
 
   document.body.appendChild(table);
