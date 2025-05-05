@@ -180,7 +180,7 @@ export function renderBoard(board, currentColor, hiddenKingId = null, hiddenOppo
           const existing = document.getElementById("guessMenu");
         
           // ✅ 如果菜单已存在且当前就是点击它的位置 → 收起
-          if (existing && existing.dataset.pos === pos) {
+          if (existing && existing.dataset.pieceId === piece.id) {
             existing.remove();
             return;
           }
