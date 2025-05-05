@@ -2,7 +2,7 @@ import { submitDarkChessSetup } from './firebase.js';
 import { getPieceSymbol } from './game.js'; // 假设你有一个函数来获取棋子符号
 import { renderBoard } from './game.js'; // 假设你有一个函数来渲染棋盘
 
-export const localGuesses = {}; // { e4: "knight", g7: "queen" }
+export const localGuesses = {};
 
 export function enterDarkChessSetup(roomId, playerColor) {
   const board = {};
@@ -182,48 +182,52 @@ function shuffleArray(arr) {
     return a;
   }
 
-
-export function showGuessMenu(pos, board, currentColor, hiddenOpponent, lastMove) {
-  const existing = document.getElementById("guessMenu");
-  if (existing) existing.remove(); // 移除旧菜单
-
-  const menu = document.createElement("div");
-  menu.id = "guessMenu";
-  menu.dataset.pos = pos; // ✅ 标记当前点击的 pos
-  menu.style.position = "absolute";
-  menu.style.background = "#fff";
-  menu.style.border = "1px solid black";
-  menu.style.padding = "5px";
-  menu.style.zIndex = 100;
-
-  const targetCell = document.querySelector(`[data-pos="${pos}"]`);
-  const rect = targetCell.getBoundingClientRect();
-  menu.style.left = rect.right + "px";
-  menu.style.top = rect.top + "px";
-
-  const pieceTypes = ["pawn", "rook", "knight", "bishop", "queen", "king"];
-  pieceTypes.forEach(type => {
-    const btn = document.createElement("button");
-    btn.textContent = getPieceSymbol(type, "white");
-    btn.style.margin = "2px";
-    btn.onclick = () => {
-      localGuesses[pos] = type;
+  export function showGuessMenu(pieceId, board, currentColor, hiddenOpponent, lastMove) {
+    const existing = document.getElementById("guessMenu");
+    if (existing) existing.remove(); // 移除旧菜单
+  
+    // ✅ 找到棋子当前所在的格子（通过 ID）
+    const pos = Object.keys(board).find(p => board[p].id === pieceId);
+    if (!pos) return; // 棋子已不在棋盘上，取消显示
+  
+    const menu = document.createElement("div");
+    menu.id = "guessMenu";
+    menu.dataset.pieceId = pieceId;
+    menu.style.position = "absolute";
+    menu.style.background = "#fff";
+    menu.style.border = "1px solid black";
+    menu.style.padding = "5px";
+    menu.style.zIndex = 100;
+  
+    const targetCell = document.querySelector(`[data-pos="${pos}"]`);
+    const rect = targetCell.getBoundingClientRect();
+    menu.style.left = rect.right + "px";
+    menu.style.top = rect.top + "px";
+  
+    const opponentColor = currentColor === "white" ? "black" : "white";
+    const pieceTypes = ["pawn", "rook", "knight", "bishop", "queen", "king"];
+    pieceTypes.forEach(type => {
+      const btn = document.createElement("button");
+      btn.textContent = getPieceSymbol(type, opponentColor);
+      btn.style.margin = "2px";
+      btn.onclick = () => {
+        localGuesses[pieceId] = type; // ✅ 以 ID 存储标记
+        menu.remove();
+        renderBoard(board, currentColor, null, hiddenOpponent, lastMove);
+      };
+      menu.appendChild(btn);
+    });
+  
+    const clearBtn = document.createElement("button");
+    clearBtn.textContent = "？";
+    clearBtn.style.margin = "2px";
+    clearBtn.onclick = () => {
+      delete localGuesses[pieceId];
       menu.remove();
       renderBoard(board, currentColor, null, hiddenOpponent, lastMove);
     };
-    menu.appendChild(btn);
-  });
-
-  // ✅ 添加“清除标记（恢复问号）”按钮
-  const clearBtn = document.createElement("button");
-  clearBtn.textContent = "？";
-  clearBtn.style.margin = "2px";
-  clearBtn.onclick = () => {
-    delete localGuesses[pos]; // 删除本地标记
-    menu.remove();
-    renderBoard(board, currentColor, null, hiddenOpponent, lastMove);
-  };
-  menu.appendChild(clearBtn);
-
-  document.body.appendChild(menu);
-}
+    menu.appendChild(clearBtn);
+  
+    document.body.appendChild(menu);
+  }
+  

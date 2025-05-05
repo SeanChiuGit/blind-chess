@@ -18,7 +18,7 @@ export function initGame(color) {
     // selectKing(playerColor, board, roomId);
   }
 
-  
+
 export function movePiece(from, to) {
   const movingPiece = board[from];
   const targetPiece = board[to];
@@ -104,6 +104,13 @@ export function renderBoard(board, currentColor, hiddenKingId = null, hiddenOppo
   const oldBoard = document.getElementById("chessBoard");
   if (oldBoard) oldBoard.remove();
 
+  const aliveIds = new Set(Object.values(board).map(p => p.id));
+  for (const id in localGuesses) {
+    if (!aliveIds.has(id)) {
+      delete localGuesses[id]; // 被吃掉 → 删除标记
+    }
+  }
+
   const table = document.createElement("table");
   table.id = "chessBoard";
   table.style.borderCollapse = "collapse";
@@ -138,16 +145,14 @@ export function renderBoard(board, currentColor, hiddenKingId = null, hiddenOppo
       // 设置棋子文本
       if (board[pos]) {
         const piece = board[pos];
-      
-        // 👀 若启用隐藏模式，且该棋子不是我方，隐藏它
         const shouldHide = hiddenOpponent && piece.color !== currentColor;
       
         if (shouldHide) {
-          // ✅ 渲染本地猜测
-          if (localGuesses[pos]) {
+          const guess = localGuesses[piece.id]; // ✅ 按棋子 ID 查找标记
+          if (guess) {
             const opponentColor = currentColor === "white" ? "black" : "white";
-            cell.textContent = getPieceSymbol(localGuesses[pos], opponentColor); // 用己方颜色显示猜测
-            cell.style.opacity = 0.4; // 可视化区别
+            cell.textContent = getPieceSymbol(guess, opponentColor);
+            cell.style.opacity = 0.4;
           } else {
             cell.textContent = "？";
           }
@@ -181,7 +186,7 @@ export function renderBoard(board, currentColor, hiddenKingId = null, hiddenOppo
           }
         
           // ✅ 否则显示新的
-          showGuessMenu(pos, board, currentColor, hiddenOpponent, lastMove);
+          showGuessMenu(piece.id, board, currentColor, hiddenOpponent, lastMove);
           return;
         }
         }
