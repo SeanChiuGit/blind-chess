@@ -32,6 +32,11 @@ export function movePiece(from, to) {
   const validMoves = getValidMoves(from, movingPiece, board);
   if (!validMoves.includes(to)) return false;
 
+  // ✅ 如果吃掉了对方棋子，清除猜测
+  if (targetPiece && localGuesses[targetPiece.id]) {
+    delete localGuesses[targetPiece.id];
+  }
+  
   // ✅ 执行移动
   board[to] = movingPiece;
   delete board[from];
@@ -104,12 +109,12 @@ export function renderBoard(board, currentColor, hiddenKingId = null, hiddenOppo
   const oldBoard = document.getElementById("chessBoard");
   if (oldBoard) oldBoard.remove();
 
-  const aliveIds = new Set(Object.values(board).map(p => p.id));
-  for (const id in localGuesses) {
-    if (!aliveIds.has(id)) {
-      delete localGuesses[id]; // 被吃掉 → 删除标记
-    }
-  }
+  // const aliveIds = new Set(Object.values(board).map(p => p.id));
+  // for (const id in localGuesses) {
+  //   if (!aliveIds.has(id)) {
+  //     delete localGuesses[id]; // 被吃掉 → 删除标记
+  //   }
+  // }
 
   const table = document.createElement("table");
   table.id = "chessBoard";
