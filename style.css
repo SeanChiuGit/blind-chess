@@ -1,0 +1,76 @@
+body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: 'Inter', sans-serif;
+    background: linear-gradient(to bottom, #ffffff 50%, #1e2b39 50%);
+  }
+  
+  .container {
+    position: relative;
+    height: 100vh;
+  }
+  
+  .top {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -100%); /* 贴到中线正上方 */
+    color: #1e2b39;
+  }
+  
+  .top h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 13rem;
+    margin: 0;
+    padding-bottom: 0; /* 保证没有额外内边距 */
+    transform: translateY(55px); /* 向下靠近中线 */
+  }
+  .bottom {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, 0); /* 贴到中线正下方 */
+  }
+  
+  .inline-form input {
+    padding: 0.0rem 0rem;
+    font-size: 3.5rem;
+    border: none;
+        /* 🟥 红色边框用于调试 */
+    border-radius: 0;
+    border-bottom: 1px solid white;
+    background: transparent;
+    color: white;
+    outline: none;
+    width: 370px;
+    text-align: center;
+    margin-right: 15px;
+  }
+  
+  .inline-form input::placeholder {
+    color: #cccccc;
+  }
+  .inline-form button {
+    padding: 0rem 0rem;
+    font-size: 3.5rem;
+    
+    font-weight: bold;
+    background: transparent;          /* 透明背景 */
+    color: white;
+    border: none;
+       /* 只保留底部白线 */
+    border-radius: 0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .inline-form button:hover {
+    background: rgba(255, 255, 255, 0.05);  /* hover 时微光感 */
+  }
+  
+  #status {
+    color: white;                      /* 状态文字变白 */
+    font-size: 1.5rem;
+  }
+  
