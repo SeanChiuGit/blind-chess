@@ -1,0 +1,49 @@
+/* board.css */
+#chessBoard {
+    border-collapse: collapse;
+    margin: 2rem auto;
+  }
+  
+  #chessBoard td {
+    width: 80px;
+    height: 80px;
+    text-align: center;
+    vertical-align: middle;
+    font-size: 40px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    user-select: none;
+  }
+  
+  .cell-white {
+    background-color: #ffffff;
+    color: #1e2b39;
+  }
+  
+  .cell-dark {
+    background-color: #1e2b39;
+    color: #ffffff;
+  }
+  
+  .cell-guess {
+    color: #cccccc;
+    opacity: 0.3;
+  }
+  
+  .cell-hidden {
+    color: #888888;
+  }
+  
+  .cell-highlight {
+    background-color: #baca44 !important;
+  }
+  
+  .cell-from {
+    background-color: #fdd835 !important;
+  }
+  
+  .cell-to {
+    background-color: #f44336 !important;
+  }
+  
