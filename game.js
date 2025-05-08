@@ -132,11 +132,14 @@ export function renderBoard(board, currentColor, hiddenKingId = null, hiddenOppo
   
   for (const rank of ranks) {
     const row = document.createElement("tr");
-    console.log(`🟦 创建格子 ${file}${rank}`);
+    
 
     for (let f = 0; f < 8; f++) {
       const file = files[f];
       const pos = file + rank;
+      console.log(`🟦 创建格子 ${pos}`);
+
+      
       const cell = document.createElement("td");
       cell.dataset.pos = pos;
 
