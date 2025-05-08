@@ -144,8 +144,9 @@ export function renderBoard(board, currentColor, hiddenKingId = null, hiddenOppo
       cell.style.cursor = "pointer";
 
       const isDark = (f + rank) % 2 === 1;
-      const baseColor = isDark ? "#769656" : "#eeeed2";
+      const baseColor = isDark ? "#1e2b39" : "#ffffff";  // 深蓝 + 白
       cell.style.backgroundColor = baseColor;
+
 
       // 设置棋子文本
       if (board[pos]) {
@@ -153,21 +154,29 @@ export function renderBoard(board, currentColor, hiddenKingId = null, hiddenOppo
         const shouldHide = hiddenOpponent && piece.color !== currentColor;
       
         if (shouldHide) {
-          const guess = localGuesses[piece.id]; // ✅ 按棋子 ID 查找标记
+          const guess = localGuesses[piece.id];
           if (guess) {
             const opponentColor = currentColor === "white" ? "black" : "white";
             cell.textContent = getPieceSymbol(guess, opponentColor);
-            cell.style.opacity = 0.4;
+            cell.style.opacity = "0.3"; // 更淡的透明度
+            cell.style.color = "#cccccc"; // 猜测颜色为灰
           } else {
             cell.textContent = "？";
+            cell.style.color = "#888888";
           }
         } else {
-          cell.textContent = getPieceSymbol(piece.type, piece.color);
-          if (piece.id === hiddenKingId) {
-            cell.textContent = "★" + getPieceSymbol(piece.type, piece.color);
-          }
+          const symbol = getPieceSymbol(piece.type, piece.color);
+          cell.textContent = piece.id === hiddenKingId ? "★" + symbol : symbol;
+      
+          // ✅ 设置棋子颜色
+          cell.style.color = piece.color === "white" ? "#ffffff" : "#1e2b39";
+      
+          // ✅ 设置额外样式
+          cell.style.fontWeight = "bold";
+          cell.style.textShadow = "0 0 3px rgba(0,0,0,0.4)";
         }
       }
+      
 
       // 点击事件
       cell.onclick = () => {
