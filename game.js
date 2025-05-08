@@ -107,6 +107,8 @@ export function initBoard() {
 export function renderBoard(board, currentColor, hiddenKingId = null, hiddenOpponent = false, lastMove = null)
 {
   const oldBoard = document.getElementById("chessBoard");
+  console.log("🎯 [renderBoard] 被调用了！");
+
   if (oldBoard) oldBoard.remove();
 
   // const aliveIds = new Set(Object.values(board).map(p => p.id));
@@ -130,6 +132,8 @@ export function renderBoard(board, currentColor, hiddenKingId = null, hiddenOppo
   
   for (const rank of ranks) {
     const row = document.createElement("tr");
+    console.log(`🟦 创建格子 ${file}${rank}`);
+
     for (let f = 0; f < 8; f++) {
       const file = files[f];
       const pos = file + rank;
@@ -150,6 +154,7 @@ export function renderBoard(board, currentColor, hiddenKingId = null, hiddenOppo
 
       // 设置棋子文本
       if (board[pos]) {
+        console.log(`♟️ 位置 ${pos} 有棋子：`, board[pos]);
         const piece = board[pos];
         const shouldHide = hiddenOpponent && piece.color !== currentColor;
       
@@ -257,6 +262,7 @@ export function renderBoard(board, currentColor, hiddenKingId = null, hiddenOppo
   }
 
   document.body.appendChild(table);
+  console.log("✅ 棋盘 table 已插入页面");
 
   function clearHighlights() {
     for (const cell of highlighted) {
