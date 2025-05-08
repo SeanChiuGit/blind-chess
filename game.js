@@ -143,12 +143,7 @@ export function renderBoard(board, currentColor, hiddenKingId = null, hiddenOppo
       const cell = document.createElement("td");
       cell.dataset.pos = pos;
 
-      cell.style.width = "80px";
-      cell.style.height = "80px";
-      cell.style.textAlign = "center";
-      cell.style.verticalAlign = "middle";
-      cell.style.fontSize = "40px";
-      cell.style.cursor = "pointer";
+      
 
       const isDark = (f + rank) % 2 === 1;
       cell.classList.add(isDark ? "cell-dark" : "cell-white");
@@ -224,7 +219,8 @@ export function renderBoard(board, currentColor, hiddenKingId = null, hiddenOppo
           for (const m of moves) {
             const targetCell = document.querySelector(`[data-pos="${m}"]`);
             if (targetCell) {
-              targetCell.style.backgroundColor = "#baca44"; // 高亮绿色
+              targetCell.classList.add("cell-highlight");
+
               highlighted.push(targetCell);
             }
           }
@@ -250,13 +246,13 @@ export function renderBoard(board, currentColor, hiddenKingId = null, hiddenOppo
        // 高亮上一步的起点和终点
     if (lastMove) {
       if (pos === lastMove.from) {
-        cell.style.backgroundColor = "#fdd835"; // 淡黄，起点
+        cell.classList.add("cell-from");
       }
       if (pos === lastMove.to) {
-        // cell.innerHTML += " ➤"; // 或用 SVG 更美观
-        cell.style.backgroundColor = "#f44336"; // 红色，终点
+        cell.classList.add("cell-to");
       }
     }
+      
     }
     table.appendChild(row);
 
@@ -267,16 +263,16 @@ export function renderBoard(board, currentColor, hiddenKingId = null, hiddenOppo
 
   function clearHighlights() {
     for (const cell of highlighted) {
-      const pos = cell.dataset.pos;
-      const fileIndex = files.indexOf(pos[0]);
-      const rankNum = parseInt(pos[1]);
-      const isDark = (fileIndex + rankNum) % 2 === 1;
-      cell.style.backgroundColor = isDark ? "#769656" : "#eeeed2";
+      cell.classList.remove("cell-highlight", "cell-from", "cell-to");
     }
     highlighted = [];
+  
     const allCells = table.querySelectorAll("td");
-    allCells.forEach(c => c.style.border = "none");
+    allCells.forEach(cell => {
+      cell.style.border = "none"; // 这个保留
+    });
   }
+  
 }
 
 export function getPieceSymbol(type, color) {

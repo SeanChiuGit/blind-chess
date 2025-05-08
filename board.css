@@ -47,3 +47,7 @@
     background-color: #f44336 !important;
   }
   
+
+  .cell-highlight { background-color: #baca44 !important; }
+  .cell-from      { background-color: #fdd835 !important; }
+  .cell-to        { background-color: #f44336 !important; }
