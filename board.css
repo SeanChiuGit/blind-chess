@@ -1,12 +1,12 @@
 /* board.css */
 #chessBoard {
-    border-collapse: collapse;
-    margin: 2rem auto;
-  }
+  border-collapse: collapse;
+  margin: 103px auto 2rem auto; /* ⬅️ 往下移动用 margin-top 控制 */
+}
   
   #chessBoard td {
-    width: 80px;
-    height: 80px;
+    width: 100px;
+    height: 100px;
     text-align: center;
     vertical-align: middle;
     font-size: 40px;
