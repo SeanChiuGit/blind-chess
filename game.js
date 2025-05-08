@@ -174,14 +174,13 @@ export function renderBoard(board, currentColor, hiddenKingId = null, hiddenOppo
           }
         } else {
           const symbol = getPieceSymbol(piece.type, piece.color);
-          cell.textContent = piece.id === hiddenKingId ? "★" + symbol : symbol;
-      
-          // ✅ 设置棋子颜色
+          const isHidden = hiddenKingId && piece.id && piece.id === hiddenKingId;
+          cell.textContent = isHidden ? "★" + symbol : symbol;
+
           cell.style.color = piece.color === "white" ? "#ffffff" : "#1e2b39";
-      
-          // ✅ 设置额外样式
           cell.style.fontWeight = "bold";
           cell.style.textShadow = "0 0 3px rgba(0,0,0,0.4)";
+
         }
       }
       
