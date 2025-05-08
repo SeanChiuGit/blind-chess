@@ -120,8 +120,9 @@ export function renderBoard(board, currentColor, hiddenKingId = null, hiddenOppo
 
   const table = document.createElement("table");
   table.id = "chessBoard";
-  table.style.borderCollapse = "collapse";
-  table.style.margin = "20px auto";
+  
+  table.classList.add("chess-table"); // ✅ 给它加一个 class 而不是写死 margin
+
 
   const files = ['a','b','c','d','e','f','g','h'];
   const ranks = [8,7,6,5,4,3,2,1];
