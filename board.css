@@ -75,7 +75,7 @@
   /* ✅ 下方：透明背景（保持 body 是深色）+ 白字 */
   .setup-container.white {
     background: transparent;
-    bottom: 2%;
+    bottom: 10%;
     color: white;
   }
   
@@ -89,16 +89,16 @@
   
   .setup-cell {
     width: 120px;
-    height: 80px;
+    height: 100px;
     border: 3px solid #ccc;
     background-color: #f0f0f0;
-    font-size: 40px;
+    font-size: 48px;
     color: inherit;
   }
   
   .setup-container.white .setup-cell {
-    background-color: #1e2b39;
-    border: 3px solid #888;
+    background-color: white;
+    border: 3px solid white;
     color: white;
   }
   
@@ -129,8 +129,8 @@
   
   
   .piece-pool span {
-    font-size: 48px;   /* 放大棋子符号 */
-    margin: 0 8px;     /* 增加间距 */
+    font-size: 64px;   /* 放大棋子符号 */
+    margin: 0 10px;     /* 增加间距 */
   }
   
 
