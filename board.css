@@ -91,16 +91,16 @@
     width: 120px;
     height: 100px;
     border: 3px solid #ccc;
-    background-color: #f0f0f0;
     font-size: 48px;
     color: inherit;
   }
   
   .setup-container.white .setup-cell {
-    background-color: white;
-    border: 3px solid white;
-    color: white;
+    background-color: #1e2b39 !important;
+    border: 2px solid white !important;
+    color: white !important;
   }
+  
   
   .setup-container.black .setup-cell {
     background-color: #f0f0f0;
