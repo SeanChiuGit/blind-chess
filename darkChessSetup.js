@@ -87,8 +87,8 @@ export function enterDarkChessSetup(roomId, playerColor) {
     const id = `${playerColor}_${index}`;
     const btn = document.createElement("span");
     btn.textContent = getPieceSymbol(type, playerColor);
-    btn.style.fontSize = "24px";
-    btn.style.margin = "5px";
+    
+    btn.style.margin = "10px";
     btn.style.cursor = "grab";
     btn.draggable = true;
 

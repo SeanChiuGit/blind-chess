@@ -130,7 +130,7 @@
   
   
   .piece-pool span {
-    font-size: 64px;   /* 放大棋子符号 */
+    font-size: 64px !important;   /* 放大棋子符号 */
     margin: 0 10px;     /* 增加间距 */
   }
   
