@@ -152,7 +152,8 @@ export function enterDarkChessSetup(roomId, playerColor) {
   submitBtn.onclick = () => {
     submitDarkChessSetup(roomId, playerColor, board);
     alert("已提交！");
-    container.remove();
+    container.style.display = "none";
+
   };
   
   // ✅ 根据颜色决定显示顺序

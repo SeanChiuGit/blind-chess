@@ -172,7 +172,7 @@ export function renderBoard(board, currentColor, hiddenKingId = null, hiddenOppo
           cell.textContent = isHidden ? "★" + symbol : symbol;
 
           // ✅ 关键：手动设置字体颜色，不被 class 覆盖
-          cell.style.color = piece.color === "white" ? "white" : "#1e2b39";
+          cell.style.color = piece.color === "white" ? "#dddddd": "#1e2b39";
        
 
 
