@@ -13,7 +13,8 @@ export function enterDarkChessSetup(roomId, playerColor) {
   const label = document.createElement("h3");
   label.innerText = `${playerColor.toUpperCase()} 自由布子`;
   label.className = "setup-title";
-
+  label.style.color = playerColor === "white" ? "white" : "#1e2b39";
+  
   container.className = `setup-container ${playerColor}`;
 
   document.body.appendChild(container);
