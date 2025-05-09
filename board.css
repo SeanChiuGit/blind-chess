@@ -73,7 +73,7 @@
   }
   
   .setup-container.black {
-    top: 0%;
+    top: -1%;
     transform: translate(-50%, 0);
     background: transparent;
     color: black;
