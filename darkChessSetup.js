@@ -11,7 +11,7 @@ export function enterDarkChessSetup(roomId, playerColor) {
   container.className = `setup-container ${playerColor}`;
 
   const label = document.createElement("h3");
-  label.innerText = `${playerColor.toUpperCase()} 自由拖动布置开局`;
+  label.innerText = `${playerColor.toUpperCase()} 自由布子`;
   label.className = "setup-title";
 
   container.className = `setup-container ${playerColor}`;
@@ -75,7 +75,7 @@ export function enterDarkChessSetup(roomId, playerColor) {
   const piecePoolDiv = document.createElement("div");
   piecePoolDiv.className = "piece-pool"; // ✅ 添加这行
 
-
+  //piecePoolDiv.innerHTML = "<p>拖动棋子到棋盘上：</p>";
   
 
   const pieceList = [
@@ -138,6 +138,8 @@ export function enterDarkChessSetup(roomId, playerColor) {
   // ✅ 提交按钮
   const randomBtn = document.createElement("button");
   randomBtn.textContent = "🎲 随机布置";
+  randomBtn.className = "setup-btn";
+
   randomBtn.onclick = () => {
     randomizeSetup();
   };
@@ -145,6 +147,7 @@ export function enterDarkChessSetup(roomId, playerColor) {
 
   const submitBtn = document.createElement("button");
   submitBtn.textContent = "✅ 提交我的棋子布局";
+  submitBtn.className = "setup-btn";
   submitBtn.onclick = () => {
     submitDarkChessSetup(roomId, playerColor, board);
     alert("已提交！");
