@@ -118,6 +118,13 @@ export function enterDarkChessSetup(roomId, playerColor) {
   function removePieceFromPool(id) {
     const el = piecePool[id];
     if (el && el.parentElement) el.parentElement.removeChild(el);
+    if (piecePoolDiv.childElementCount === 0) {
+      const placeholder = document.createElement("div");
+      placeholder.style.height = "1em"; // 或 "3rem" 视你需要的高度
+      placeholder.style.visibility = "hidden";
+      piecePoolDiv.appendChild(placeholder);
+    }
+  
   }
 
   function addPieceToPool(piece) {
