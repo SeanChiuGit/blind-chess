@@ -65,14 +65,14 @@
   }
   
   .setup-container.white {
-    top: 45.1%;
+    top: 35%;
     transform: translate(-50%, 0);
-    background: #1e2b39;
+    background: transparent;
     color: white;
   }
   
   .setup-container.black {
-    top: -.01%;
+    top: -10%;
     transform: translate(-50%, 0);
     background: transparent;
     color: black;
@@ -95,7 +95,12 @@
     font-size: 48px;
     color: inherit;
   }
-  
+
+  .setup-container.white .setup-cell {
+    background-color: #1e2b39;  /* 或你想要的暗色背景 */
+    border: 3px solid white;
+    color: white;
+  }
   
   
   .setup-container.black .setup-cell {
