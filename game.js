@@ -173,10 +173,12 @@ export function renderBoard(board, currentColor, hiddenKingId = null, hiddenOppo
           const isHidden = hiddenKingId && piece.id && piece.id === hiddenKingId;
           cell.textContent = isHidden ? "★" + symbol : symbol;
 
-          cell.classList.add(piece.color === "white" ? "cell-white" : "cell-dark");
+          // ✅ 强制设置颜色，不让 cell-white / cell-dark 控制字体颜色
+          cell.style.color = piece.color === "white" ? "white" : "#1e2b39";
 
+          // ✅ 设置背景色而不是 class 控制颜色逻辑
+          cell.style.backgroundColor = (f + rank) % 2 === 1 ? "#44515e" : "#c4c7b5";
 
-        }
       }
       
 

@@ -16,15 +16,13 @@
     user-select: none;
   }
   
-  .cell-white {
-    background-color: #ffffff;
-    color: #1e2b39;
+  .cell-dark {
+    background-color: #44515e;
+  }
+  .cell-light {
+    background-color: #c4c7b5;
   }
   
-  .cell-dark {
-    background-color: #4a5a6a;
-    color: #ffffff;
-  }
   
   .cell-guess {
     color: #cccccc;
