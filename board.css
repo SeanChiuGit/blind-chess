@@ -20,7 +20,7 @@
     background-color: #5c6e75; /* 更偏灰蓝色 */
   }
   .cell-light {
-    background-color: #ada382; /* 比 #c4c7b5 更明亮 */
+    background-color: hsl(46, 65%, 16%); /* 比 #c4c7b5 更明亮 */
   }
   
   
@@ -108,7 +108,7 @@
   
   .piece-pool {
     margin: 3rem 0;
-    min-height: 50px
+    min-height: 30px
   }
   
   .setup-btn {
