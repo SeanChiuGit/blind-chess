@@ -118,9 +118,6 @@
   .setup-container.white p {
     color: white;
 }
-  .setup-container.white,
-  .setup-container.black {
-    background-color: #1e2b39;
-  }
+  
 
 
