@@ -66,14 +66,14 @@
   }
   
   .setup-container.white {
-    top: 30%;
+    top: 45%;
     transform: translate(-50%, 0);
     background: transparent;
     color: white;
   }
   
   .setup-container.black {
-    top: 70%;
+    top: 28%;
     transform: translate(-50%, 0);
     background: transparent;
     color: black;
