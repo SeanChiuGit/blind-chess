@@ -11,6 +11,8 @@ export function enterDarkChessSetup(roomId, playerColor) {
   container.className = `setup-container ${playerColor}`;
 
   container.innerHTML = `<h3>${playerColor.toUpperCase()} 自由布子</h3>`;
+  container.className = `setup-container ${playerColor}`;
+
   document.body.appendChild(container);
 
   const files = ['a','b','c','d','e','f','g','h'];
