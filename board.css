@@ -84,7 +84,7 @@
     height: 100px;
     border: 1px solid #ccc;
     background-color: #1e2b39;
-    font-size: 40px;
+    font-size: 48px; /* ✅ 字体也可略大 */
     color: white;
   }
   
@@ -103,4 +103,18 @@
     cursor: pointer;
   }
   
+  .setup-container table {
+    margin: 1rem auto 0 auto;
+    transform: translateX(50px); /* ✅ 向右移动一点 */
+  }
   
+  .setup-container.white h1,
+  .setup-container.white p {
+    color: white;
+  }
+
+  .setup-container.black h1,
+  .setup-container.black p {
+    color: black;
+  }
+
