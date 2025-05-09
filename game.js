@@ -161,7 +161,8 @@ export function renderBoard(board, currentColor, hiddenKingId = null, hiddenOppo
           if (guess) {
             const opponentColor = currentColor === "white" ? "black" : "white";
             cell.textContent = getPieceSymbol(guess, opponentColor);
-            cell.classList.add("cell-guess");
+            cell.style.color = opponentColor === "white" ? "white" : "#1e2b39";
+            //cell.classList.add("cell-guess");
           } else {
             cell.textContent = "？";
             cell.classList.add("cell-hidden");
