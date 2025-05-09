@@ -84,9 +84,10 @@
     height: 100px;
     border: 1px solid #ccc;
     background-color: #1e2b39;
-    font-size: 48px; /* ✅ 字体也可略大 */
+    font-size: 40px; /* 改为与 #chessBoard td 一致 */
     color: white;
   }
+  
   
   .piece-pool {
     margin: 1rem 0;
@@ -105,16 +106,21 @@
   
   .setup-container table {
     margin: 1rem auto 0 auto;
-    transform: translateX(50px); /* ✅ 向右移动一点 */
+    transform: none; /* ✅ 向右移动一点 */
+  }
+
+  .setup-container.black h1,
+  .setup-container.black p {
+    color: white;
   }
 
   .setup-container.white h1,
   .setup-container.white p {
     color: white;
+}
+  .setup-container.white,
+  .setup-container.black {
+    background-color: #1e2b39;
   }
 
-  .setup-container.black h1,
-  .setup-container.black p {
-    color: black;
-  }
 
