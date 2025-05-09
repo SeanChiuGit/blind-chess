@@ -7,7 +7,6 @@ export const localGuesses = {};
 export function enterDarkChessSetup(roomId, playerColor) {
   const board = {};
   const usedPieceIds = new Set();
-  
   const container = document.createElement("div");
   container.innerHTML = `<h3>${playerColor.toUpperCase()} 自由布子</h3>`;
   document.body.appendChild(container);
