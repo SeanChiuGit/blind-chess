@@ -73,6 +73,8 @@ export function enterDarkChessSetup(roomId, playerColor) {
 
   // ✅ 可选棋子池
   const piecePoolDiv = document.createElement("div");
+  piecePoolDiv.className = "piece-pool"; // ✅ 添加这行
+
   piecePoolDiv.innerHTML = "<p>拖动棋子到棋盘上：</p>";
   
 

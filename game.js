@@ -147,37 +147,33 @@ export function renderBoard(board, currentColor, hiddenKingId = null, hiddenOppo
       
 
       const isDark = (f + rank) % 2 === 1;
-      cell.classList.add(isDark ? "cell-dark" : "cell-white");
+      const bgColor = isDark ? "#5c6e75" : "#e2e2d2";
 
+      cell.style.backgroundColor = bgColor;
 
-      // 设置棋子文本
       if (board[pos]) {
-        console.log(`♟️ 位置 ${pos} 有棋子：`, board[pos]);
         const piece = board[pos];
+        const isHidden = hiddenKingId && piece.id === hiddenKingId;
         const shouldHide = hiddenOpponent && piece.color !== currentColor;
-      
+
         if (shouldHide) {
           const guess = localGuesses[piece.id];
           if (guess) {
             const opponentColor = currentColor === "white" ? "black" : "white";
             cell.textContent = getPieceSymbol(guess, opponentColor);
             cell.classList.add("cell-guess");
-
           } else {
             cell.textContent = "？";
             cell.classList.add("cell-hidden");
-
           }
         } else {
           const symbol = getPieceSymbol(piece.type, piece.color);
-          const isHidden = hiddenKingId && piece.id && piece.id === hiddenKingId;
           cell.textContent = isHidden ? "★" + symbol : symbol;
 
-          // ✅ 强制设置颜色，不让 cell-white / cell-dark 控制字体颜色
+          // ✅ 关键：手动设置字体颜色，不被 class 覆盖
           cell.style.color = piece.color === "white" ? "white" : "#1e2b39";
+       
 
-          // ✅ 设置背景色而不是 class 控制颜色逻辑
-          cell.style.backgroundColor = (f + rank) % 2 === 1 ? "#44515e" : "#c4c7b5";
 
 
 
