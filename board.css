@@ -64,19 +64,19 @@
   }
   
   .setup-container.white {
-    background-color: #1e2b39;
+    
     bottom: 5%;
   }
   
   .setup-container.black {
-    background-color: #1e2b39;
+    
     top: 5%;
   }
   
   .setup-container h1 {
     font-size: 3rem;
     margin-bottom: 1rem;
-    color: #1e2b39;
+    color: white;
   }
   
   .setup-cell {
