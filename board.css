@@ -65,7 +65,7 @@
   }
   
   .setup-container.white {
-    top: 50%;
+    top: 45%;
     transform: translate(-50%, 0);
     background: transparent;
     color: white;
