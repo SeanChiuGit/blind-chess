@@ -147,9 +147,8 @@ export function renderBoard(board, currentColor, hiddenKingId = null, hiddenOppo
       
 
       const isDark = (f + rank) % 2 === 1;
-      const bgColor = isDark ? "#5c6e75" : "#e2e2d2";
+      cell.classList.add(isDark ? "cell-dark" : "cell-light");
 
-      cell.style.backgroundColor = bgColor;
 
       if (board[pos]) {
         const piece = board[pos];
