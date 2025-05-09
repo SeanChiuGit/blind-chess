@@ -65,19 +65,20 @@
     box-sizing: border-box;
   }
   
-  /* ✅ 上方：白底 + 黑字 */
-  .setup-container.black {
+  .setup-container.white {
+    top: 58%;
+    transform: translate(-50%, 0);
     background: transparent;
-    top: 5%;
+    color: white;
+  }
+  
+  .setup-container.black {
+    top: 18%;
+    transform: translate(-50%, 0);
+    background: transparent;
     color: black;
   }
   
-  /* ✅ 下方：透明背景（保持 body 是深色）+ 白字 */
-  .setup-container.white {
-    background: transparent;
-    bottom: 10%;
-    color: white;
-  }
   
   .setup-container h1,
   .setup-container p {
