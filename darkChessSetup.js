@@ -10,7 +10,10 @@ export function enterDarkChessSetup(roomId, playerColor) {
   const container = document.createElement("div");
   container.className = `setup-container ${playerColor}`;
 
-  container.innerHTML = `<h3>${playerColor.toUpperCase()} 自由布子</h3>`;
+  const label = document.createElement("h3");
+  label.innerText = `${playerColor.toUpperCase()} 自由布子`;
+  label.className = "setup-title";
+
   container.className = `setup-container ${playerColor}`;
 
   document.body.appendChild(container);
@@ -27,14 +30,12 @@ export function enterDarkChessSetup(roomId, playerColor) {
       const pos = files[f] + r;
       const cell = document.createElement("td");
       cell.dataset.pos = pos;
-      cell.style.width = "50px";
-      cell.style.height = "50px";
-      cell.style.border = "1px solid black";
+      
+      
       cell.style.textAlign = "center";
-      cell.style.fontSize = "24px";
       cell.style.verticalAlign = "middle";
-      cell.style.backgroundColor = "#f0f0f0";
       cell.style.cursor = "pointer";
+      cell.classList.add("setup-cell"); // ✅ 添加这一行
 
       cell.ondragover = (e) => e.preventDefault();
       cell.ondrop = (e) => {
@@ -149,17 +150,19 @@ export function enterDarkChessSetup(roomId, playerColor) {
   
   // ✅ 根据颜色决定显示顺序
   if (playerColor === "black") {
+    container.appendChild(label);          // ✅ 黑方标题在最上
     container.appendChild(piecePoolDiv);
     container.appendChild(randomBtn);
     container.appendChild(submitBtn);
-    container.appendChild(table); // 黑方棋盘在下
+    container.appendChild(table);
   } else {
-    container.appendChild(table); // 白方棋盘在上
+    container.appendChild(table);
+    container.appendChild(label);         // ✅ 白方标题在棋盘下
     container.appendChild(piecePoolDiv);
     container.appendChild(randomBtn);
     container.appendChild(submitBtn);
   }
-
+  
 
 
   function randomizeSetup() {
