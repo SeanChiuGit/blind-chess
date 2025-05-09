@@ -11,7 +11,7 @@ export function enterDarkChessSetup(roomId, playerColor) {
   container.className = `setup-container ${playerColor}`;
 
   const label = document.createElement("h3");
-  label.innerText = `${playerColor.toUpperCase()} 自由布子`;
+  label.innerText = `${playerColor.toUpperCase()} 自由拖动布置开局`;
   label.className = "setup-title";
 
   container.className = `setup-container ${playerColor}`;
@@ -75,7 +75,7 @@ export function enterDarkChessSetup(roomId, playerColor) {
   const piecePoolDiv = document.createElement("div");
   piecePoolDiv.className = "piece-pool"; // ✅ 添加这行
 
-  piecePoolDiv.innerHTML = "<p>拖动棋子到棋盘上：</p>";
+
   
 
   const pieceList = [
