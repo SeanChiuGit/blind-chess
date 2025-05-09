@@ -67,7 +67,7 @@
   
   /* ✅ 上方：白底 + 黑字 */
   .setup-container.black {
-    background: white;
+    background: transparent;
     top: 5%;
     color: black;
   }
