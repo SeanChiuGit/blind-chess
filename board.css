@@ -73,7 +73,7 @@
   }
   
   .setup-container.black {
-    top: -1%;
+    top: -.5%;
     transform: translate(-50%, 0);
     background: transparent;
     color: black;
@@ -110,7 +110,7 @@
   }
   
   .piece-pool {
-    margin: 1rem 0;
+    margin: 3rem 0;
   }
   
   .setup-btn {
@@ -130,7 +130,7 @@
   
   
   .piece-pool span {
-    font-size: 64px !important;   /* 放大棋子符号 */
+    font-size: 84px ;   /* 放大棋子符号 */
     margin: 0 10px;     /* 增加间距 */
   }
   
