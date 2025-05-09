@@ -1,7 +1,7 @@
 /* board.css */
 #chessBoard {
   border-collapse: collapse;
-  margin: 113px auto 2rem auto; /* ⬅️ 往下移动用 margin-top 控制 */
+  margin: 108px auto 2rem auto; /* ⬅️ 往下移动用 margin-top 控制 */
 }
   
   #chessBoard td {
@@ -66,14 +66,14 @@
   }
   
   .setup-container.white {
-    top: 16%;
+    top: 38%;
     transform: translate(-50%, 0);
     background: transparent;
     color: white;
   }
   
   .setup-container.black {
-    top: 10%;
+    top: 28%;
     transform: translate(-50%, 0);
     background: transparent;
     color: black;
