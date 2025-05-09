@@ -76,8 +76,8 @@
   .setup-container h1 {
     font-size: 3rem;
     margin-bottom: 1rem;
-    color: white;
   }
+  
   
   .setup-cell {
     width: 100px;
@@ -107,7 +107,7 @@
     margin: 1rem auto 0 auto;
     transform: translateX(50px); /* ✅ 向右移动一点 */
   }
-  
+
   .setup-container.white h1,
   .setup-container.white p {
     color: white;
