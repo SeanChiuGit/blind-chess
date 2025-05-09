@@ -54,20 +54,17 @@
 
 
   .setup-container {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
+    color: white;
     text-align: center;
-    font-family: 'Playfair Display', serif;
-    z-index: 50;
+    margin-top: 5vh;
   }
   
   .setup-container.white {
-    bottom: 20px;
+    background-color: #1e2b39;
   }
   
   .setup-container.black {
-    top: 20px;
+    background-color: #1e2b39;
   }
   
   .setup-container h1 {
@@ -77,13 +74,26 @@
   }
   
   .setup-cell {
-    width: 50px;
-    height: 50px;
-    border: 1px solid black;
-    text-align: center;
-    vertical-align: middle;
-    font-size: 24px;
-    background-color: #f0f0f0;
+    width: 100px;
+    height: 100px;
+    border: 1px solid #ccc;
+    background-color: #1e2b39;
+    font-size: 40px;
+    color: white;
+  }
+  
+  .piece-pool {
+    margin: 1rem 0;
+  }
+  
+  .setup-btn {
+    margin: 0.5rem;
+    padding: 0.4rem 0.8rem;
+    font-size: 1rem;
+    border: none;
+    border-radius: 4px;
+    background: #ffffff55;
+    color: white;
     cursor: pointer;
   }
   
