@@ -71,7 +71,7 @@
   }
   
   .setup-container.black {
-    top: -.2%;
+    top: -.1%;
     transform: translate(-50%, 0);
     background: transparent;
     color: black;
@@ -95,11 +95,7 @@
     color: inherit;
   }
   
-  .setup-container.white .setup-cell {
-    background-color: #1e2b39;
-    border: 3px solid white;
-    color: white;
-  }
+  
   
   .setup-container.black .setup-cell {
     background-color: #f0f0f0;
