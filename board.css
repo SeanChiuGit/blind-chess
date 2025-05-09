@@ -63,36 +63,49 @@
     font-family: 'Playfair Display', serif;
   }
   
-  .setup-container.white {
-    
-    bottom: 5%;
-  }
-  
+  /* ✅ 黑方：深背景 + 白字 */
   .setup-container.black {
-    
+    background-color: #1e2b39;
     top: 5%;
+    color: white;
   }
   
-  .setup-container h1 {
-    font-size: 3rem;
+  /* ✅ 白方：白背景 + 黑字 */
+  .setup-container.white {
+    background-color: #ffffff;
+    bottom: 5%;
+    color: black;
+  }
+  
+  /* ✅ 标题样式继承文字色 */
+  .setup-container h1,
+  .setup-container p {
+    font-size: 1.5rem;
     margin-bottom: 1rem;
+    color: inherit;
   }
   
-  
+  /* ✅ 棋盘格子大小一致 */
   .setup-cell {
     width: 100px;
     height: 100px;
     border: 1px solid #ccc;
-    background-color: #1e2b39;
-    font-size: 40px; /* 改为与 #chessBoard td 一致 */
-    color: white;
+    background-color: #f0f0f0;
+    font-size: 40px;
+    color: inherit;
   }
   
+  /* ✅ 棋盘居中 */
+  .setup-container table {
+    margin: 1rem auto 0 auto;
+  }
   
+  /* ✅ 棋子池样式 */
   .piece-pool {
     margin: 1rem 0;
   }
   
+  /* ✅ 按钮 */
   .setup-btn {
     margin: 0.5rem;
     padding: 0.4rem 0.8rem;
@@ -100,24 +113,10 @@
     border: none;
     border-radius: 4px;
     background: #ffffff22;
-    color: white;
+    color: inherit;
     cursor: pointer;
   }
   
-  .setup-container table {
-    margin: 1rem auto 0 auto;
-    transform: none; /* ✅ 向右移动一点 */
-  }
-
-  .setup-container.black h1,
-  .setup-container.black p {
-    color: white;
-  }
-
-  .setup-container.white h1,
-  .setup-container.white p {
-    color: white;
-}
   
 
 
