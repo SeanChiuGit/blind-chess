@@ -179,6 +179,9 @@ export function renderBoard(board, currentColor, hiddenKingId = null, hiddenOppo
           // ✅ 设置背景色而不是 class 控制颜色逻辑
           cell.style.backgroundColor = (f + rank) % 2 === 1 ? "#44515e" : "#c4c7b5";
 
+
+
+        }
       }
       
 
