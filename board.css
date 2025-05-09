@@ -1,7 +1,7 @@
 /* board.css */
 #chessBoard {
   border-collapse: collapse;
-  margin: 203px auto 2rem auto; /* ⬅️ 往下移动用 margin-top 控制 */
+  margin: 123px auto 2rem auto; /* ⬅️ 往下移动用 margin-top 控制 */
 }
   
   #chessBoard td {
@@ -75,7 +75,7 @@
   /* ✅ 下方：透明背景（保持 body 是深色）+ 白字 */
   .setup-container.white {
     background: transparent;
-    bottom: 5%;
+    bottom: 2%;
     color: white;
   }
   
@@ -90,7 +90,7 @@
   .setup-cell {
     width: 120px;
     height: 80px;
-    border: 2px solid #ccc;
+    border: 3px solid #ccc;
     background-color: #f0f0f0;
     font-size: 40px;
     color: inherit;
@@ -98,13 +98,13 @@
   
   .setup-container.white .setup-cell {
     background-color: #1e2b39;
-    border: 1px solid #888;
+    border: 3px solid #888;
     color: white;
   }
   
   .setup-container.black .setup-cell {
     background-color: #f0f0f0;
-    border: 1px solid #ccc;
+    border: 3px solid #ccc;
     color: black;
   }
   
