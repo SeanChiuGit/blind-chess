@@ -7,8 +7,10 @@ export const localGuesses = {};
 export function enterDarkChessSetup(roomId, playerColor) {
   const board = {};
   const usedPieceIds = new Set();
+  
   const container = document.createElement("div");
-  container.innerHTML = `<h3>${playerColor.toUpperCase()} 自由布子</h3>`;
+  container.className = `setup-container ${playerColor}`;
+  container.innerHTML = `<h1>${playerColor.toUpperCase()} Setup</h1>`;
   document.body.appendChild(container);
 
   const files = ['a','b','c','d','e','f','g','h'];
@@ -23,14 +25,8 @@ export function enterDarkChessSetup(roomId, playerColor) {
       const pos = files[f] + r;
       const cell = document.createElement("td");
       cell.dataset.pos = pos;
-      cell.style.width = "50px";
-      cell.style.height = "50px";
-      cell.style.border = "1px solid black";
-      cell.style.textAlign = "center";
-      cell.style.fontSize = "24px";
-      cell.style.verticalAlign = "middle";
-      cell.style.backgroundColor = "#f0f0f0";
-      cell.style.cursor = "pointer";
+      cell.classList.add("setup-cell");
+
 
       cell.ondragover = (e) => e.preventDefault();
       cell.ondrop = (e) => {

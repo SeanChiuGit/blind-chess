@@ -13,7 +13,7 @@ export function showModeButtons(onSelect) {
 
   // 标题
   const title = document.createElement("h1");
-  title.textContent = "Blind Chess";
+  title.textContent = "Game Modes";
   title.style.fontFamily = "'Playfair Display', serif";
   title.style.fontSize = "4rem";
   title.style.color = "#1e2b39";
@@ -23,7 +23,7 @@ export function showModeButtons(onSelect) {
   // 模式按钮
   const modes = [
     { label: "Classic", value: "hidden_king" },
-    { label: "Dark", value: "blind_chess" },
+    { label: "Blind", value: "blind_chess" },
     { label: "Fog", value: "fog" },
   ];
 

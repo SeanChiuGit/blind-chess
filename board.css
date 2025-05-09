@@ -51,3 +51,40 @@
   .cell-highlight { background-color: #baca44 !important; }
   .cell-from      { background-color: #fdd835 !important; }
   .cell-to        { background-color: #f44336 !important; }
+
+
+  .setup-container {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+    font-family: 'Playfair Display', serif;
+    z-index: 50;
+  }
+  
+  .setup-container.white {
+    bottom: 20px;
+  }
+  
+  .setup-container.black {
+    top: 20px;
+  }
+  
+  .setup-container h1 {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    color: #1e2b39;
+  }
+  
+  .setup-cell {
+    width: 50px;
+    height: 50px;
+    border: 1px solid black;
+    text-align: center;
+    vertical-align: middle;
+    font-size: 24px;
+    background-color: #f0f0f0;
+    cursor: pointer;
+  }
+  
+  
