@@ -88,11 +88,11 @@
   }
   
   .setup-cell {
-    width: 160px;
-    height: 120px;
-    border: 1px solid #ccc;
+    width: 120px;
+    height: 80px;
+    border: 2px solid #ccc;
     background-color: #f0f0f0;
-    font-size: 56px;
+    font-size: 40px;
     color: inherit;
   }
   
