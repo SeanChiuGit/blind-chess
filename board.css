@@ -81,17 +81,18 @@
   
   .setup-container h1,
   .setup-container p {
-    font-size: 1.5rem;
+    font-size: 3rem;
     margin-bottom: 1rem;
     color: inherit; /* 自动跟随上层颜色 */
+    line-height: 1.6;
   }
   
   .setup-cell {
-    width: 100px;
-    height: 100px;
+    width: 160px;
+    height: 120px;
     border: 1px solid #ccc;
     background-color: #f0f0f0;
-    font-size: 40px;
+    font-size: 56px;
     color: inherit;
   }
   
@@ -112,8 +113,8 @@
   }
   
   .setup-btn {
-    margin: 0.5rem;
-    padding: 0.4rem 0.8rem;
+    margin: 1.2rem;
+    padding: 0.6rem 1.2rem;
     font-size: 1rem;
     border: none;
     border-radius: 4px;
@@ -127,6 +128,10 @@
   }
   
   
+  .piece-pool span {
+    font-size: 48px;   /* 放大棋子符号 */
+    margin: 0 8px;     /* 增加间距 */
+  }
   
 
 
