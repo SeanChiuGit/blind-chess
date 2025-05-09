@@ -88,7 +88,7 @@ export function enterDarkChessSetup(roomId, playerColor) {
     const btn = document.createElement("span");
     btn.textContent = getPieceSymbol(type, playerColor);
     
-    btn.style.margin = "10px";
+    btn.style.margin = "5px";
     btn.style.cursor = "grab";
     btn.draggable = true;
 
@@ -99,7 +99,7 @@ export function enterDarkChessSetup(roomId, playerColor) {
         // ✅ 创建一个临时的拖动图像
         const ghost = document.createElement("div");
         ghost.textContent = getPieceSymbol(type, playerColor);
-        ghost.style.fontSize = "24px";
+        
         ghost.style.padding = "5px";
         ghost.style.opacity = "0.8";
         document.body.appendChild(ghost);
