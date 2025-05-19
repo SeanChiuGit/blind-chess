@@ -8,7 +8,15 @@ export function enterDarkChessSetup(roomId, playerColor) {
   const board = {};
   const usedPieceIds = new Set();
   const container = document.createElement("div");
-  container.innerHTML = `<h3>${playerColor.toUpperCase()} 自由布子</h3>`;
+  container.className = `setup-container ${playerColor}`;
+
+  const label = document.createElement("h3");
+  label.innerText = `${playerColor.toUpperCase()} 自由布子`;
+  label.className = "setup-title";
+  label.style.color = playerColor === "white" ? "white" : "#1e2b39";
+  
+  container.className = `setup-container ${playerColor}`;
+
   document.body.appendChild(container);
 
   const files = ['a','b','c','d','e','f','g','h'];
@@ -23,14 +31,12 @@ export function enterDarkChessSetup(roomId, playerColor) {
       const pos = files[f] + r;
       const cell = document.createElement("td");
       cell.dataset.pos = pos;
-      cell.style.width = "50px";
-      cell.style.height = "50px";
-      cell.style.border = "1px solid black";
+      
+      
       cell.style.textAlign = "center";
-      cell.style.fontSize = "24px";
       cell.style.verticalAlign = "middle";
-      cell.style.backgroundColor = "#f0f0f0";
       cell.style.cursor = "pointer";
+      cell.classList.add("setup-cell"); // ✅ 添加这一行
 
       cell.ondragover = (e) => e.preventDefault();
       cell.ondrop = (e) => {
@@ -64,12 +70,14 @@ export function enterDarkChessSetup(roomId, playerColor) {
     table.appendChild(row);
   }
 
-  container.appendChild(table);
+ 
 
   // ✅ 可选棋子池
   const piecePoolDiv = document.createElement("div");
-  piecePoolDiv.innerHTML = "<p>拖动棋子到棋盘上：</p>";
-  container.appendChild(piecePoolDiv);
+  piecePoolDiv.className = "piece-pool"; // ✅ 添加这行
+
+  //piecePoolDiv.innerHTML = "<p>拖动棋子到棋盘上：</p>";
+  
 
   const pieceList = [
     "rook", "knight", "bishop", "queen", "king", "bishop", "knight", "rook",
@@ -82,7 +90,7 @@ export function enterDarkChessSetup(roomId, playerColor) {
     const id = `${playerColor}_${index}`;
     const btn = document.createElement("span");
     btn.textContent = getPieceSymbol(type, playerColor);
-    btn.style.fontSize = "24px";
+    
     btn.style.margin = "5px";
     btn.style.cursor = "grab";
     btn.draggable = true;
@@ -94,7 +102,8 @@ export function enterDarkChessSetup(roomId, playerColor) {
         // ✅ 创建一个临时的拖动图像
         const ghost = document.createElement("div");
         ghost.textContent = getPieceSymbol(type, playerColor);
-        ghost.style.fontSize = "24px";
+        ghost.style.fontSize = getComputedStyle(btn).fontSize;
+
         ghost.style.padding = "5px";
         ghost.style.opacity = "0.8";
         document.body.appendChild(ghost);
@@ -109,6 +118,13 @@ export function enterDarkChessSetup(roomId, playerColor) {
   function removePieceFromPool(id) {
     const el = piecePool[id];
     if (el && el.parentElement) el.parentElement.removeChild(el);
+    if (piecePoolDiv.childElementCount === 0) {
+      const placeholder = document.createElement("div");
+      placeholder.style.height = "1em"; // 或 "3rem" 视你需要的高度
+      placeholder.style.visibility = "hidden";
+      piecePoolDiv.appendChild(placeholder);
+    }
+  
   }
 
   function addPieceToPool(piece) {
@@ -130,19 +146,38 @@ export function enterDarkChessSetup(roomId, playerColor) {
   // ✅ 提交按钮
   const randomBtn = document.createElement("button");
   randomBtn.textContent = "🎲 随机布置";
+  randomBtn.className = "setup-btn";
+
   randomBtn.onclick = () => {
     randomizeSetup();
   };
-  container.appendChild(randomBtn);
+  
 
   const submitBtn = document.createElement("button");
   submitBtn.textContent = "✅ 提交我的棋子布局";
+  submitBtn.className = "setup-btn";
   submitBtn.onclick = () => {
     submitDarkChessSetup(roomId, playerColor, board);
     alert("已提交！");
-    container.remove();
+    container.style.display = "none";
+
   };
-  container.appendChild(submitBtn);
+  
+  // ✅ 根据颜色决定显示顺序
+  if (playerColor === "black") {
+    container.appendChild(label);          // ✅ 黑方标题在最上
+    container.appendChild(piecePoolDiv);
+    container.appendChild(randomBtn);
+    container.appendChild(submitBtn);
+    container.appendChild(table);
+  } else {
+    container.appendChild(table);
+    container.appendChild(label);         // ✅ 白方标题在棋盘下
+    container.appendChild(piecePoolDiv);
+    container.appendChild(randomBtn);
+    container.appendChild(submitBtn);
+  }
+  
 
 
   function randomizeSetup() {

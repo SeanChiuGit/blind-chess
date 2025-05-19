@@ -1,0 +1,157 @@
+/* board.css */
+#chessBoard {
+  border-collapse: collapse;
+  margin: 103px auto 2rem auto; /* ⬅️ 往下移动用 margin-top 控制 */
+}
+  
+  #chessBoard td {
+    width: 100px;
+    height: 100px;
+    text-align: center;
+    vertical-align: middle;
+    font-size: 40px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    user-select: none;
+  }
+  
+  .cell-dark {
+    background-color: #5c6e75; /* 更偏灰蓝色 */
+  }
+  .cell-light {
+    background-color: #d0ccbb; /* 比 #c4c7b5 更明亮 */
+  }
+  
+  
+  
+  
+  
+  .cell-hidden {
+    color: #888888;
+  }
+  
+  .cell-highlight {
+    background-color: #baca44 !important;
+  }
+  
+  .cell-from {
+    background-color: #fdd835 !important;
+  }
+  
+  .cell-to {
+    background-color: #f44336 !important;
+  }
+  
+
+  .cell-highlight { background-color: #baca44 !important; }
+  .cell-from      { background-color: #fdd835 !important; }
+  .cell-to        { background-color: #f44336 !important; }
+
+
+  .setup-container {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+    width: 100%;
+    z-index: 10;
+    font-family: 'Playfair Display', serif;
+    padding: 2rem 0;
+    box-sizing: border-box;
+  }
+  
+  .setup-container.white {
+    top: 45%;
+    transform: translate(-50%, 0);
+    background: transparent;
+    color: white;
+  }
+  
+  .setup-container.black {
+    top: -6%;
+    transform: translate(-50%, 0);
+    background: transparent;
+    color: black;
+  }
+  
+  
+  .setup-container h1,
+  .setup-container p {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    color: inherit; /* 自动跟随上层颜色 */
+    line-height: 1.6;
+  }
+  
+  .setup-cell {
+    width: 100px;
+    height: 100px;
+    border: 3px solid #ccc;
+    background-color: #f0f0f0;
+    font-size: 48px;
+    color: inherit;
+  }
+
+  .setup-container.white .setup-cell {
+    background-color: #1e2b39;  /* 或你想要的暗色背景 */
+    border: 3px solid white;
+    color: white;
+  }
+  
+  
+  .setup-container.black .setup-cell {
+    background-color: #f0f0f0;
+    border: 3px solid #1e2b39;
+    color: black;
+  }
+  
+  .piece-pool {
+    margin: 3rem 0;
+    
+  }
+  
+  .setup-btn {
+    margin: 1rem 0.5rem;
+    padding: 0.5rem 1.2rem;
+    font-size: 1.2rem;
+    background: transparent;
+    border: 2px solid;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.2s ease;
+  }
+  
+  .setup-container.black .setup-btn {
+    color: black;
+    border-color: black;
+  }
+  
+  .setup-container.white .setup-btn {
+    color: white;
+    border-color: white;
+  }
+  .setup-btn:hover {
+    opacity: 0.8;
+  }
+
+  .setup-container table {
+    margin: 1rem auto 0 auto;
+  }
+  
+  
+  .piece-pool span {
+    font-size: 50px ;   /* 放大棋子符号 */
+    margin: 0 10px;     /* 增加间距 */
+  }
+  
+
+  .setup-title {
+    font-size: 2rem;
+    margin: 1rem 0;
+    font-weight: bold;
+    color: white;
+    text-align: center;
+  }
+  

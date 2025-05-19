@@ -1,25 +1,28 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Hidden King Chess</title>
-  <!-- Firebase SDK -->
+  <meta charset="UTF-8" />
+  <title>BlindChess</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="board.css" />
+
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Inter&display=swap" rel="stylesheet">
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
-  <!-- 引入 main.js -->
   <script type="module" src="./main.js"></script>
 </head>
 <body>
-  <h1>Hidden King Chess</h1>
-
-  <div>
-    <input id="roomInput" placeholder="Enter Room ID" />
-    <button id="joinBtn">Join Room</button>
+  <div class="container">
+    <div class="top">
+      <h1>BlindChess</h1>
+    </div>
+    <div class="bottom">
+      <div class="inline-form">
+        <input id="roomInput" placeholder="Enter Room ID" />
+        <button id="joinBtn">Join Room</button>
+        <span id="status">Not connected.</span>
+      </div>
+    </div>
   </div>
-
-  <div id="status">Not connected.</div>
-  <div id="stateView"></div>
-
-
 </body>
 </html>
