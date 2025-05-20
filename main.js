@@ -20,6 +20,19 @@ export let game_mode = null; // 玩法
 
 initFirebase();
 
+// 清理过期房间
+firebase.database().ref("rooms").once("value").then(snapshot => {
+  const now = Date.now();
+  const rooms = snapshot.val();
+  for (const roomId in rooms) {
+    const created = rooms[roomId].createdAt;
+    const maxAge = 1000 * 60 * 60 * 12; // 12小时
+    if (created && now - created > maxAge) {
+      firebase.database().ref("rooms/" + roomId).remove(); // 删除
+    }
+  }
+});
+
 // 房间加入逻辑
 document.getElementById('joinBtn').onclick = async () => {
   roomId = document.getElementById('roomInput').value.trim();
@@ -37,7 +50,8 @@ document.getElementById('joinBtn').onclick = async () => {
   createOrJoinRoom(roomId, (roomData) => {
   });
 
-  // 玩家加入房间后（已知 roomId 和 playerSlot）
+
+  // 玩家加入房间后 选择玩法
   firebase.database().ref(`rooms/${roomId}/selections/${slot}`)
   .once("value")
   .then(snapshot => {
@@ -49,7 +63,8 @@ document.getElementById('joinBtn').onclick = async () => {
     }
   });
 
-  // 所有玩家都监听是否匹配成功（只会触发一次）
+
+  // 模式选择后 开始游戏
   onBothModesSelectedAndMatched(roomId, (mode) => {
   // startWithMode(mode);
     game_mode = mode;

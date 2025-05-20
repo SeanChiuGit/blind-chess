@@ -53,18 +53,23 @@ export function sendState(state) {
 }
 
 export async function assignPlayerColor(roomId) {
-  const roomRef = firebase.database().ref("rooms/" + roomId + "/players");
-  const snapshot = await roomRef.once("value");
+  const roomRootRef = firebase.database().ref("rooms/" + roomId);
+  const playersRef = roomRootRef.child("players");
+  const snapshot = await playersRef.once("value");
   const players = snapshot.val() || {};
 
   if (!players.player1) {
-    await roomRef.child("player1").set("white");
+    // ✅ 首次加入 → 设置创建时间
+    await Promise.all([
+      playersRef.child("player1").set("white"),
+      roomRootRef.child("createdAt").set(Date.now())
+    ]);
     return { slot: "player1", color: "white" };
   } else if (!players.player2) {
-    await roomRef.child("player2").set("black");
+    await playersRef.child("player2").set("black");
     return { slot: "player2", color: "black" };
   } else {
-    return null; // 房间满了
+    return null; // 房间已满
   }
 }
 
