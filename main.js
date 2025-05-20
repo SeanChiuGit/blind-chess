@@ -57,7 +57,40 @@ document.getElementById('joinBtn').onclick = async () => {
     initGame(color); // 🎮 初始化棋盘
 
     // **********************************************************
-    if (game_mode === "hidden_king") {
+    if (game_mode === "classic") {
+      console.log("游戏模式：经典");
+      // 进入经典棋局
+      renderBoard(board, playerColor); // 渲染棋盘
+
+      // 发送初始状态
+      if (playerColor === "white"){
+        sendState(getGameState());
+        console.log("白方已初始化棋盘，发送状态：", getGameState());
+      } 
+
+      // 监听状态变化
+      onStateChange((remoteState) => {
+        const gameState = remoteState?.game;
+        if (!gameState || !gameState.board) {
+          console.log("等待白方初始化棋盘...");
+          return;
+        }
+        
+        console.log("接收到远程状态：", gameState);
+        applyGameState(gameState); // 应用 game 下的状态
+        myTurn = gameState.turn === playerColor;
+        renderBoard(gameState.board, playerColor);
+
+        const winner = checkVictoryCondition(gameState.board);
+        if (winner) {
+          alert(`${winner.toUpperCase()} wins!`);
+          // 可选：禁用进一步点击，比如通过设置 myTurn = false
+        }
+      });
+
+    }
+    // **********************************************************
+    else if (game_mode === "hidden_king") {
             console.log("游戏模式：隐藏国王");
 
             // initGame(color); // 🎮 初始化棋盘并开始“选隐藏国王”界面

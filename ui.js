@@ -22,9 +22,10 @@ export function showModeButtons(onSelect) {
 
   // 模式按钮
   const modes = [
-    { label: "Classic", value: "hidden_king" },
+    { label: "Classic", value: "classic" },
+    { label: "Hidden King", value: "hidden_king" },
     { label: "Blind", value: "blind_chess" },
-    { label: "Fog", value: "fog" },
+    // { label: "Fog", value: "fog" },
   ];
 
   for (const { label, value } of modes) {
