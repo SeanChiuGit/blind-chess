@@ -7,14 +7,14 @@ export let db, roomRef;
 
 export function initFirebase() {
     const firebaseConfig = {
-        apiKey: "AIzaSyCP8pzO-gnYpuyLlQ5GNhtLHsNT0QJEGOM",
-        authDomain: "no-king-chess.firebaseapp.com",
-        databaseURL: "https://no-king-chess-default-rtdb.firebaseio.com",
-        projectId: "no-king-chess",
-        storageBucket: "no-king-chess.firebasestorage.app",
-        messagingSenderId: "806486248636",
-        appId: "1:806486248636:web:80f46e5ec92e81d6d1d4b9"
-      };
+      apiKey: "AIzaSyDVjCCy7j80N7-VbPTicZeIqK2bu9Gik3c",
+      authDomain: "blindchess-fa5f0.firebaseapp.com",
+      databaseURL: "https://blindchess-fa5f0-default-rtdb.firebaseio.com",
+      projectId: "blindchess-fa5f0",
+      storageBucket: "blindchess-fa5f0.firebasestorage.app",
+      messagingSenderId: "971675007996",
+      appId: "1:971675007996:web:cb3e58abbea388aadc5079"
+    };
 
   const app = firebase.initializeApp(firebaseConfig);
   db = firebase.database(app);
