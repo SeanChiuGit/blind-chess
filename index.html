@@ -1,22 +1,34 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <title>BlindChess</title>
   <link rel="stylesheet" href="style.css" />
   <link rel="stylesheet" href="board.css" />
 
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Inter&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Inter&display=swap"
+    rel="stylesheet">
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
   <script type="module" src="./main.js"></script>
 </head>
+
 <body>
-  <div class="container">
+  <div id="game-container" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0;"></div>
+  <div class="container" style="position: relative; z-index: 10; pointer-events: none;">
     <div class="top">
       <h1>BlindChess</h1>
     </div>
-    <div class="bottom">
+    <div class="bottom" style="pointer-events: auto;">
       <div class="inline-form">
         <input id="roomInput" placeholder="Enter Room ID" />
         <button id="joinBtn">Join Room</button>
@@ -25,4 +37,5 @@
     </div>
   </div>
 </body>
+
 </html>

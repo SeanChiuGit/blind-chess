@@ -89,34 +89,44 @@
         controls.minDistance = 5;
         controls.maxDistance = 30;
 
-        // --- Lighting ---
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
-        scene.add(ambientLight);
+        // --- Materials (Glass Style) ---
 
-        const dirLight = new THREE.DirectionalLight(0xffffff, 1.5);
-        dirLight.position.set(10, 20, 10);
-        dirLight.castShadow = true;
-        dirLight.shadow.mapSize.width = 2048;
-        dirLight.shadow.mapSize.height = 2048;
-        scene.add(dirLight);
-
-        const rimLight = new THREE.SpotLight(0x44aaff, 5);
-        rimLight.position.set(-10, 5, -10);
-        rimLight.lookAt(0, 0, 0);
-        scene.add(rimLight);
-
-        // --- Materials ---
+        // Dark Glass (Deep Blue - Lightened for visibility)
         const darkPieceMat = new THREE.MeshPhysicalMaterial({
+            color: 0x3a5a7a,    // Lighter Blue-Grey
+            metalness: 0.1,
+            roughness: 0.05,
+            transmission: 0.8,
+            thickness: 1.5,
+            ior: 1.5,
+            clearcoat: 1.0,
+            attenuationColor: new THREE.Color(0x557799),
+            attenuationDistance: 3.0
+        });
+
+        // White Glass (Frosted/Clear)
+        const whitePieceMat = new THREE.MeshPhysicalMaterial({
+            color: 0xffffff,
+            metalness: 0.1,
+            roughness: 0.1,
+            transmission: 0.9,
+            thickness: 1.5,
+            ior: 1.5,
+            clearcoat: 1.0,
+            attenuationColor: new THREE.Color(0xffffff),
+            attenuationDistance: 5.0
+        });
+
+        // Board Materials (Keep opaque for contrast)
+        const darkBoardMat = new THREE.MeshPhysicalMaterial({
             color: 0x1e2b39, roughness: 0.2, metalness: 0.1, clearcoat: 0.5
         });
-        const whitePieceMat = new THREE.MeshPhysicalMaterial({
+        const whiteBoardMat = new THREE.MeshPhysicalMaterial({
             color: 0xffffff, roughness: 0.1, metalness: 0.0, transmission: 0.05, thickness: 0.5
         });
+
         const glassMat = new THREE.MeshPhysicalMaterial({
             color: 0xffffff, metalness: 0.1, roughness: 0.05, transmission: 0.9, thickness: 1.0, transparent: true, opacity: 1.0
-        });
-        const highlightMat = new THREE.MeshBasicMaterial({
-            color: 0x00ff00, transparent: true, opacity: 0.3, depthTest: false
         });
 
         // --- Geometry ---
@@ -144,7 +154,7 @@
             for (let z = 0; z < 8; z++) {
                 const isDark = (x + z) % 2 === 1;
                 const geometry = new THREE.BoxGeometry(squareSize * 0.95, 0.2, squareSize * 0.95);
-                const material = isDark ? darkPieceMat : whitePieceMat;
+                const material = isDark ? darkBoardMat : whiteBoardMat;
                 const square = new THREE.Mesh(geometry, material);
 
                 // Store grid coordinates in userData for logic
@@ -172,65 +182,150 @@
         }
         mainGroup.add(decorGroup);
 
-        // --- Pieces ---
+        // --- Question Mark Model ---
+        function createQuestionMark() {
+            const group = new THREE.Group();
+            const material = new THREE.MeshPhysicalMaterial({
+                color: 0xffd700, // Gold
+                metalness: 0.8,
+                roughness: 0.2,
+                emissive: 0xaa6600,
+                emissiveIntensity: 0.2
+            });
+
+            // Top Curve (Torus segment)
+            const curve = new THREE.TorusGeometry(0.3, 0.1, 16, 32, Math.PI * 1.5);
+            const curveMesh = new THREE.Mesh(curve, material);
+            curveMesh.rotation.z = Math.PI / 4;
+            curveMesh.position.set(0, 0.8, 0);
+            group.add(curveMesh);
+
+            // Vertical Stem
+            const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.05, 0.4, 16), material);
+            stem.position.set(0, 0.5, 0);
+            group.add(stem);
+
+            // Dot
+            const dot = new THREE.Mesh(new THREE.SphereGeometry(0.12, 16, 16), material);
+            dot.position.set(0, 0.15, 0);
+            group.add(dot);
+
+            // Floating Animation Helper
+            group.userData.isFloating = true;
+
+            return group;
+        }
+
+        // --- Detailed Pieces ---
         function createPiece(type, color) {
+            if (type === 'hidden') {
+                const qMark = createQuestionMark();
+                qMark.userData = { type: 'piece', pieceType: 'hidden', color: color };
+                return qMark;
+            }
+
             const group = new THREE.Group();
             const material = color === 'white' ? whitePieceMat : darkPieceMat;
 
-            // Base
-            const base = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.5, 0.2, 32), material);
-            base.position.y = 0.1;
+            // Common Base for all pieces
+            const baseGeo = new THREE.CylinderGeometry(0.45, 0.5, 0.15, 32);
+            const base = new THREE.Mesh(baseGeo, material);
+            base.position.y = 0.075;
             group.add(base);
 
-            // Simple geometry per type
-            let body;
+            // Helper to add parts
+            function addPart(geometry, y, scale = 1) {
+                const mesh = new THREE.Mesh(geometry, material);
+                mesh.position.y = y;
+                mesh.scale.setScalar(scale);
+                group.add(mesh);
+                return mesh;
+            }
+
             if (type === 'pawn') {
-                body = new THREE.Mesh(new THREE.ConeGeometry(0.3, 0.8, 32), material);
-                body.position.y = 0.6;
-                group.add(body);
-                const head = new THREE.Mesh(new THREE.SphereGeometry(0.25, 32, 32), material);
+                // Tapered body
+                addPart(new THREE.CylinderGeometry(0.15, 0.35, 0.6, 16), 0.45);
+                // Collar
+                addPart(new THREE.TorusGeometry(0.15, 0.05, 16, 32), 0.75).rotation.x = Math.PI / 2;
+                // Head
+                addPart(new THREE.SphereGeometry(0.25, 32, 32), 0.95);
+
+            } else if (type === 'rook') {
+                // Column
+                addPart(new THREE.CylinderGeometry(0.35, 0.4, 0.8, 32), 0.55);
+                // Top rim
+                addPart(new THREE.CylinderGeometry(0.45, 0.35, 0.3, 32), 1.05);
+                // Crenellations (4 blocks)
+                for (let i = 0; i < 4; i++) {
+                    const block = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.15, 0.15), material);
+                    block.position.y = 1.25;
+                    const angle = (i / 4) * Math.PI * 2;
+                    block.position.x = Math.cos(angle) * 0.25;
+                    block.position.z = Math.sin(angle) * 0.25;
+                    group.add(block);
+                }
+
+            } else if (type === 'knight') {
+                // Base stand
+                addPart(new THREE.CylinderGeometry(0.3, 0.4, 0.4, 32), 0.35);
+
+                // Horse Head Shape (Extruded)
+                const shape = new THREE.Shape();
+                shape.moveTo(0, 0);
+                shape.lineTo(0.2, 0.1); // nose bottom
+                shape.lineTo(0.25, 0.3); // nose tip
+                shape.lineTo(0.15, 0.5); // forehead
+                shape.lineTo(0.1, 0.7); // ear tip
+                shape.lineTo(0, 0.6); // ear base
+                shape.lineTo(-0.15, 0.4); // neck back
+                shape.lineTo(-0.2, 0); // neck base
+                shape.lineTo(0, 0);
+
+                const extrudeSettings = { depth: 0.2, bevelEnabled: true, bevelThickness: 0.05, bevelSize: 0.05, bevelSegments: 2 };
+                const headGeo = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+                const head = new THREE.Mesh(headGeo, material);
+                head.position.set(0, 0.55, -0.1);
+                head.rotation.y = color === 'white' ? Math.PI / 2 : -Math.PI / 2; // Face opponent
+                // Center the extrusion
+                head.geometry.center();
+                // Adjust position after centering
                 head.position.y = 0.9;
                 group.add(head);
-            } else if (type === 'rook') {
-                body = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 0.8, 32), material);
-                body.position.y = 0.6;
-                group.add(body);
-                const top = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 0.3, 6), material);
-                top.position.y = 1.1;
-                group.add(top);
-            } else if (type === 'knight') {
-                body = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.4, 0.6, 32), material);
-                body.position.y = 0.5;
-                group.add(body);
-                const head = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.5, 0.6), material);
-                head.position.set(0, 1.0, 0.1);
-                head.rotation.x = -0.2;
-                group.add(head);
+
             } else if (type === 'bishop') {
-                body = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.4, 1.0, 32), material);
-                body.position.y = 0.7;
-                group.add(body);
-                const head = new THREE.Mesh(new THREE.CapsuleGeometry(0.25, 0.4, 4, 8), material);
-                head.position.y = 1.3;
-                group.add(head);
+                // Tall body
+                addPart(new THREE.CylinderGeometry(0.15, 0.35, 0.9, 32), 0.6);
+                // Collar
+                addPart(new THREE.TorusGeometry(0.2, 0.05, 16, 32), 1.05).rotation.x = Math.PI / 2;
+                // Mitre Head
+                const head = addPart(new THREE.SphereGeometry(0.25, 32, 32), 1.25);
+                head.scale.set(0.8, 1.2, 0.8);
+                // Small ball on top
+                addPart(new THREE.SphereGeometry(0.08, 16, 16), 1.6);
+
             } else if (type === 'queen') {
-                body = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.45, 1.4, 32), material);
-                body.position.y = 0.9;
-                group.add(body);
-                const crown = new THREE.Mesh(new THREE.TorusGeometry(0.2, 0.05, 16, 100), material);
-                crown.rotation.x = Math.PI / 2;
-                crown.position.y = 1.6;
-                group.add(crown);
+                // Body
+                addPart(new THREE.CylinderGeometry(0.2, 0.4, 1.2, 32), 0.75);
+                // Collar
+                addPart(new THREE.TorusGeometry(0.25, 0.05, 16, 32), 1.35).rotation.x = Math.PI / 2;
+                // Crown
+                const crown = addPart(new THREE.CylinderGeometry(0.3, 0.15, 0.3, 16), 1.5);
+                // Crown points
+                const points = addPart(new THREE.TorusGeometry(0.25, 0.05, 16, 6), 1.65);
+                points.rotation.x = Math.PI / 2;
+                // Top ball
+                addPart(new THREE.SphereGeometry(0.15, 32, 32), 1.7);
+
             } else if (type === 'king') {
-                body = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.5, 1.5, 32), material);
-                body.position.y = 0.95;
-                group.add(body);
-                const crossV = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.4, 0.1), material);
-                crossV.position.y = 1.8;
-                group.add(crossV);
-                const crossH = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.1, 0.1), material);
-                crossH.position.y = 1.8;
-                group.add(crossH);
+                // Body
+                addPart(new THREE.CylinderGeometry(0.25, 0.45, 1.3, 32), 0.8);
+                // Collar
+                addPart(new THREE.TorusGeometry(0.25, 0.08, 16, 32), 1.45).rotation.x = Math.PI / 2;
+                // Top Flare
+                addPart(new THREE.CylinderGeometry(0.35, 0.2, 0.2, 32), 1.6);
+                // Cross
+                const v = addPart(new THREE.BoxGeometry(0.1, 0.35, 0.1), 1.9);
+                const h = addPart(new THREE.BoxGeometry(0.3, 0.1, 0.1), 1.95);
             }
 
             group.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
@@ -243,7 +338,10 @@
         const backRank = ['rook', 'knight', 'bishop', 'queen', 'king', 'bishop', 'knight', 'rook'];
 
         function spawnPiece(type, color, gridX, gridZ) {
-            const piece = createPiece(type, color);
+            // DEMO LOGIC: Make opponent pieces 'hidden' (Question Marks)
+            const actualType = color === 'white' ? type : 'hidden';
+
+            const piece = createPiece(actualType, color);
             const worldX = gridX * squareSize - offset;
             const worldZ = gridZ * squareSize - offset;
             piece.position.set(worldX, 0.1, worldZ);
@@ -251,6 +349,7 @@
             // Store current grid position
             piece.userData.gridX = gridX;
             piece.userData.gridZ = gridZ;
+            piece.userData.realType = type; // Store real type for guessing logic
 
             boardGroup.add(piece);
             pieces.push(piece);
@@ -309,15 +408,12 @@
             raycaster.setFromCamera(mouse, camera);
 
             // 1. Check for Piece Click
-            // We raycast against the boardGroup children (pieces are groups of meshes)
-            // But raycaster hits meshes. We need to find the parent group.
             const intersects = raycaster.intersectObjects(boardGroup.children, true);
 
             let clickedPiece = null;
             let clickedSquare = null;
 
             for (let hit of intersects) {
-                // Traverse up to find if we hit a piece group
                 let obj = hit.object;
                 while (obj.parent && obj.parent !== boardGroup) {
                     obj = obj.parent;
@@ -325,7 +421,7 @@
 
                 if (obj.userData.type === 'piece') {
                     clickedPiece = obj;
-                    break; // Prioritize piece
+                    break;
                 } else if (obj.userData.type === 'square') {
                     clickedSquare = obj;
                 }
@@ -335,18 +431,69 @@
                 // Logic: Select only own color
                 if (clickedPiece.userData.color === currentTurn) {
                     selectPiece(clickedPiece);
+                } else if (clickedPiece.userData.pieceType === 'hidden') {
+                    // Clicked on Hidden Opponent Piece -> Show Guess Menu
+                    showGuessMenu(clickedPiece, event.clientX, event.clientY);
                 } else if (selectedPiece) {
-                    // Capture attempt?
-                    // For now, simple move-to-capture logic
+                    // Capture attempt
                     movePieceTo(selectedPiece, clickedPiece.position.x, clickedPiece.position.z);
-                    // Remove captured piece
                     boardGroup.remove(clickedPiece);
                     pieces.splice(pieces.indexOf(clickedPiece), 1);
                 }
             } else if (clickedSquare && selectedPiece) {
-                // Move logic
                 movePieceTo(selectedPiece, clickedSquare.position.x, clickedSquare.position.z);
             }
+        }
+
+        function showGuessMenu(piece, x, y) {
+            // Remove existing menu
+            const existing = document.getElementById('guess-menu');
+            if (existing) existing.remove();
+
+            const menu = document.createElement('div');
+            menu.id = 'guess-menu';
+            menu.style.position = 'absolute';
+            menu.style.left = x + 'px';
+            menu.style.top = y + 'px';
+            menu.style.background = 'rgba(30, 43, 57, 0.9)';
+            menu.style.padding = '10px';
+            menu.style.borderRadius = '8px';
+            menu.style.border = '1px solid #00aaff';
+            menu.style.display = 'grid';
+            menu.style.gridTemplateColumns = 'repeat(3, 1fr)';
+            menu.style.gap = '5px';
+            menu.style.zIndex = '100';
+
+            const options = ['pawn', 'rook', 'knight', 'bishop', 'queen', 'king'];
+            options.forEach(type => {
+                const btn = document.createElement('button');
+                btn.innerText = type.charAt(0).toUpperCase() + type.slice(1);
+                btn.style.background = '#00aaff';
+                btn.style.color = 'white';
+                btn.style.border = 'none';
+                btn.style.padding = '5px';
+                btn.style.cursor = 'pointer';
+                btn.style.borderRadius = '4px';
+
+                btn.onclick = () => {
+                    alert(`Guessed: ${type}. Real type: ${piece.userData.realType}`);
+                    menu.remove();
+                };
+                menu.appendChild(btn);
+            });
+
+            // Close button
+            const close = document.createElement('button');
+            close.innerText = 'X';
+            close.style.gridColumn = '1 / -1';
+            close.style.background = '#ff4444';
+            close.style.color = 'white';
+            close.style.border = 'none';
+            close.style.marginTop = '5px';
+            close.onclick = () => menu.remove();
+            menu.appendChild(close);
+
+            document.body.appendChild(menu);
         }
 
         function selectPiece(piece) {
@@ -354,22 +501,15 @@
             selectRing.position.x = piece.position.x;
             selectRing.position.z = piece.position.z;
             selectRing.visible = true;
-
-            // Optional: Lift piece slightly
-            // piece.position.y = 0.5;
         }
 
         function movePieceTo(piece, x, z) {
-            // Animate move (simple lerp in animate loop or just set for now)
-            // Let's just set it for responsiveness
             piece.position.x = x;
             piece.position.z = z;
 
-            // Update selection ring
             selectRing.visible = false;
             selectedPiece = null;
 
-            // Switch turn
             currentTurn = currentTurn === 'white' ? 'black' : 'white';
             document.getElementById('status').innerText =
                 currentTurn.charAt(0).toUpperCase() + currentTurn.slice(1) + "'s Turn";
@@ -384,6 +524,14 @@
 
             mainGroup.position.y = Math.sin(time * 0.5) * 0.2;
             decorGroup.rotation.y = time * 0.05;
+
+            // Animate Floating Question Marks
+            pieces.forEach(p => {
+                if (p.userData.pieceType === 'hidden') {
+                    p.position.y = 0.1 + Math.sin(time * 2 + p.position.x) * 0.05;
+                    p.rotation.y = time;
+                }
+            });
 
             controls.update();
             renderer.render(scene, camera);

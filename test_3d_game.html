@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Test 3D Game Integration</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+        }
+
+        #game-container {
+            width: 100vw;
+            height: 100vh;
+        }
+    </style>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+    <!-- Mock Firebase -->
+    <script>
+        window.firebase = {
+            database: () => ({
+                ref: () => ({
+                    once: () => Promise.resolve({ val: () => null }),
+                    set: () => Promise.resolve(),
+                    on: () => { },
+                    off: () => { }
+                })
+            })
+        };
+    </script>
+    <script type="module">
+        import { initGame, renderBoard, board } from './game.js';
+
+        // Mock main.js exports if needed (game.js imports them)
+        // Since game.js imports roomId and myTurn from main.js, we might have issues if main.js executes side effects.
+        // But main.js has side effects (initFirebase).
+        // Let's hope it doesn't crash.
+
+        // Initialize Game
+        initGame('white');
+
+        // Render Board
+        console.log("Rendering Board...");
+        renderBoard(board, 'white');
+
+    </script>
+</head>
+
+<body>
+    <div id="game-container"></div>
+</body>
+
+</html>

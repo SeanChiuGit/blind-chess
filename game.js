@@ -4,19 +4,21 @@ import { selectKing } from './hiddenking.js';
 import { roomId, myTurn } from './main.js'; // 引入 roomId
 import { sendState } from './firebase.js'; // 引入 sendState 函数
 import { showGuessMenu, localGuesses } from './darkChessSetup.js'; // 引入 showGuessMenu 函数
+import { Chess3DView } from './3d_view.js';
 
 export let board, turn, playerColor;
+let chess3D = null;
 // export const localGuesses = {}; // { e4: "knight", g7: "queen" }
 
 export function initGame(color) {
   // TODO
-    playerColor = color; // 'white' or 'black'
-    board = initBoard();
-    turn = 'white';
-  
-    // // 👑 启动选择隐藏国王界面
-    // selectKing(playerColor, board, roomId);
-  }
+  playerColor = color; // 'white' or 'black'
+  board = initBoard();
+  turn = 'white';
+
+  // // 👑 启动选择隐藏国王界面
+  // selectKing(playerColor, board, roomId);
+}
 
 
 export function movePiece(from, to) {
@@ -36,7 +38,7 @@ export function movePiece(from, to) {
   if (targetPiece && localGuesses[targetPiece.id]) {
     delete localGuesses[targetPiece.id];
   }
-  
+
   // ✅ 执行移动
   board[to] = movingPiece;
   delete board[from];
@@ -104,8 +106,54 @@ export function initBoard() {
   return board;
 }
 
-export function renderBoard(board, currentColor, hiddenKingId = null, hiddenOpponent = false, lastMove = null)
-{
+export function renderBoard(board, currentColor, hiddenKingId = null, hiddenOpponent = false, lastMove = null) {
+  // --- 3D View Integration ---
+  if (!chess3D) {
+    chess3D = new Chess3DView('game-container', {
+      onMove: (to) => {
+        if (selectedPos) {
+          onMove(selectedPos, to);
+          selectedPos = null;
+          chess3D.highlightSquare(null); // Clear highlight
+        }
+      },
+      onSelect: (pos) => {
+        if (!myTurn) return;
+        const piece = board[pos];
+        if (piece && piece.color === currentColor) {
+          selectedPos = pos;
+          chess3D.highlightSquare(pos);
+          // Optional: Highlight valid moves in 3D?
+          // const moves = getValidMoves(pos, piece, board);
+          // chess3D.showValidMoves(moves); // Need to implement this in 3D view
+        } else if (selectedPos) {
+          // Capture attempt
+          onMove(selectedPos, pos);
+          selectedPos = null;
+          chess3D.highlightSquare(null);
+        }
+      }
+    });
+  }
+
+  // Update 3D Board
+  // Filter board for Blind Chess if needed (hiddenOpponent)
+  // For now, pass full board, let 3D view handle or just show all
+  // If hiddenOpponent is true, we should probably filter the board passed to 3D view
+  // to only include visible pieces.
+
+  let displayBoard = { ...board };
+  if (hiddenOpponent) {
+    // Filter out opponent pieces unless guessed/revealed?
+    // The current 2D logic handles this by checking 'shouldHide'.
+    // We should probably replicate that logic here or pass the raw board and let 3D view handle it.
+    // For simplicity, let's pass the full board for now and refine visibility later.
+  }
+
+  chess3D.updateBoard(displayBoard, currentColor);
+
+
+  // --- 2D Board (Legacy/Debug) ---
   const oldBoard = document.getElementById("chessBoard");
   console.log("🎯 [renderBoard] 被调用了！");
 
@@ -120,31 +168,31 @@ export function renderBoard(board, currentColor, hiddenKingId = null, hiddenOppo
 
   const table = document.createElement("table");
   table.id = "chessBoard";
-  
+
   table.classList.add("chess-table"); // ✅ 给它加一个 class 而不是写死 margin
 
 
-  const files = ['a','b','c','d','e','f','g','h'];
-  const ranks = [8,7,6,5,4,3,2,1];
+  const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+  const ranks = [8, 7, 6, 5, 4, 3, 2, 1];
 
   let selected = null;
   let highlighted = [];
 
-  
+
   for (const rank of ranks) {
     const row = document.createElement("tr");
-    
+
 
     for (let f = 0; f < 8; f++) {
       const file = files[f];
       const pos = file + rank;
       console.log(`🟦 创建格子 ${pos}`);
 
-      
+
       const cell = document.createElement("td");
       cell.dataset.pos = pos;
 
-      
+
 
       const isDark = (f + rank) % 2 === 1;
       cell.classList.add(isDark ? "cell-dark" : "cell-light");
@@ -171,15 +219,15 @@ export function renderBoard(board, currentColor, hiddenKingId = null, hiddenOppo
           cell.textContent = isHidden ? "★" + symbol : symbol;
 
           // ✅ 关键：手动设置字体颜色，不被 class 覆盖
-          cell.style.color = piece.color === "white" ? "#dddddd": "#1e2b39";
-       
+          cell.style.color = piece.color === "white" ? "#dddddd" : "#1e2b39";
+
 
 
 
 
         }
       }
-      
+
 
       // 点击事件
       cell.onclick = () => {
@@ -194,18 +242,18 @@ export function renderBoard(board, currentColor, hiddenKingId = null, hiddenOppo
             clearHighlights();
             return;
           } else {
-          const existing = document.getElementById("guessMenu");
-        
-          // ✅ 如果菜单已存在且当前就是点击它的位置 → 收起
-          if (existing && existing.dataset.pieceId === piece.id) {
-            existing.remove();
+            const existing = document.getElementById("guessMenu");
+
+            // ✅ 如果菜单已存在且当前就是点击它的位置 → 收起
+            if (existing && existing.dataset.pieceId === piece.id) {
+              existing.remove();
+              return;
+            }
+
+            // ✅ 否则显示新的
+            showGuessMenu(piece.id, board, currentColor, hiddenOpponent, lastMove);
             return;
           }
-        
-          // ✅ 否则显示新的
-          showGuessMenu(piece.id, board, currentColor, hiddenOpponent, lastMove);
-          return;
-        }
         }
 
         // 清除所有高亮
@@ -236,7 +284,7 @@ export function renderBoard(board, currentColor, hiddenKingId = null, hiddenOppo
             renderBoard(board, currentColor, null, hiddenOpponent, lastMove);
             return;
           }
-        
+
           // ✅ 合法走法才继续
           onMove(selected, pos);
           selected = null;
@@ -245,16 +293,16 @@ export function renderBoard(board, currentColor, hiddenKingId = null, hiddenOppo
 
       row.appendChild(cell);
 
-       // 高亮上一步的起点和终点
-    if (lastMove) {
-      if (pos === lastMove.from) {
-        cell.classList.add("cell-from");
+      // 高亮上一步的起点和终点
+      if (lastMove) {
+        if (pos === lastMove.from) {
+          cell.classList.add("cell-from");
+        }
+        if (pos === lastMove.to) {
+          cell.classList.add("cell-to");
+        }
       }
-      if (pos === lastMove.to) {
-        cell.classList.add("cell-to");
-      }
-    }
-      
+
     }
     table.appendChild(row);
 
@@ -268,26 +316,28 @@ export function renderBoard(board, currentColor, hiddenKingId = null, hiddenOppo
       cell.classList.remove("cell-highlight", "cell-from", "cell-to");
     }
     highlighted = [];
-  
+
     const allCells = table.querySelectorAll("td");
     allCells.forEach(cell => {
       cell.style.border = "none"; // 这个保留
     });
   }
-  
+
 }
 
 export function getPieceSymbol(type, color) {
   const symbols = {
-    pawn:   { white: "♙", black: "♟︎" },
-    rook:   { white: "♖", black: "♜" },
+    pawn: { white: "♙", black: "♟︎" },
+    rook: { white: "♖", black: "♜" },
     knight: { white: "♘", black: "♞" },
     bishop: { white: "♗", black: "♝" },
-    queen:  { white: "♕", black: "♛" },
-    king:   { white: "♔", black: "♚" }
+    queen: { white: "♕", black: "♛" },
+    king: { white: "♔", black: "♚" }
   };
   return symbols[type]?.[color] || "?";
 }
+
+let selectedPos = null; // For 3D selection state
 
 function onMove(from, to) {
   if (!myTurn) return;
