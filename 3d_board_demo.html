@@ -4,24 +4,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BlindChess 3D Demo</title>
+    <title>BlindChess 3D - Ethereal Sanctum</title>
     <style>
         body {
             margin: 0;
             overflow: hidden;
-            background-color: #050510;
+            background-color: #f0f4f8;
         }
 
         #info {
             position: absolute;
-            top: 10px;
+            top: 20px;
             width: 100%;
             text-align: center;
-            color: white;
-            font-family: 'Playfair Display', serif;
+            color: #1e2b39;
+            font-family: 'Inter', sans-serif;
             pointer-events: none;
             z-index: 10;
-            text-shadow: 0 0 10px #00ffff;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            font-weight: 300;
         }
     </style>
     <!-- Import Three.js -->
@@ -37,150 +39,176 @@
 
 <body>
     <div id="info">
-        <h1>BlindChess 3D - Magical Board Demo</h1>
+        <h1>BlindChess 3D</h1>
     </div>
     <script type="module">
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { RectAreaLightUniformsLib } from 'three/addons/lights/RectAreaLightUniformsLib.js';
 
         // Scene Setup
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x050510); // Deep dark blue/black
-        scene.fog = new THREE.FogExp2(0x050510, 0.02);
+        // Soft, premium light grey/blue background
+        scene.background = new THREE.Color(0xf5f7fa);
+        scene.fog = new THREE.Fog(0xf5f7fa, 10, 50);
 
-        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-        camera.position.set(0, 15, 15);
+        const camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 16, 16);
         camera.lookAt(0, 0, 0);
 
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.2;
         document.body.appendChild(renderer.domElement);
 
         const controls = new OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
         controls.dampingFactor = 0.05;
+        controls.maxPolarAngle = Math.PI / 2 - 0.05;
+        controls.minDistance = 5;
+        controls.maxDistance = 30;
 
-        // Lighting
-        const ambientLight = new THREE.AmbientLight(0x404080, 1.5); // Blueish ambient
+        // --- Lighting (Studio Setup) ---
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
         scene.add(ambientLight);
 
-        const dirLight = new THREE.DirectionalLight(0xffffff, 2);
-        dirLight.position.set(5, 10, 5);
+        // Main Key Light (Warm)
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1.5);
+        dirLight.position.set(10, 20, 10);
         dirLight.castShadow = true;
+        dirLight.shadow.mapSize.width = 2048;
+        dirLight.shadow.mapSize.height = 2048;
+        dirLight.shadow.bias = -0.0001;
         scene.add(dirLight);
 
-        // Magical Point Lights
-        const pointLight1 = new THREE.PointLight(0x00ffff, 5, 20);
-        pointLight1.position.set(-5, 5, -5);
-        scene.add(pointLight1);
+        // Rim Light (Cool Blue) - highlights edges
+        const rimLight = new THREE.SpotLight(0x44aaff, 5);
+        rimLight.position.set(-10, 5, -10);
+        rimLight.lookAt(0, 0, 0);
+        scene.add(rimLight);
 
-        const pointLight2 = new THREE.PointLight(0xff00ff, 5, 20);
-        pointLight2.position.set(5, 5, 5);
-        scene.add(pointLight2);
-
-        // Board Generation
-        const boardGroup = new THREE.Group();
-        const squareSize = 1.5;
-        const boardSize = 8 * squareSize;
-        const offset = (boardSize - squareSize) / 2;
-
-        const textureLoader = new THREE.TextureLoader();
-
-        // Materials
-        const whiteMaterial = new THREE.MeshStandardMaterial({
-            color: 0xeeeeee,
+        // --- Materials ---
+        // Deep Blue (Matte/Satin)
+        const darkPieceMat = new THREE.MeshPhysicalMaterial({
+            color: 0x1e2b39,
             roughness: 0.2,
             metalness: 0.1,
-            emissive: 0x111111
+            clearcoat: 0.5,
+            clearcoatRoughness: 0.1
         });
 
-        const darkMaterial = new THREE.MeshStandardMaterial({
-            color: 0x1e2b39, // Dark blue from original game
+        // White (Ceramic/Marble)
+        const whitePieceMat = new THREE.MeshPhysicalMaterial({
+            color: 0xffffff,
             roughness: 0.1,
-            metalness: 0.3,
-            emissive: 0x0a0f14
+            metalness: 0.0,
+            transmission: 0.05, // Slight translucency like marble
+            thickness: 0.5
         });
 
-        const highlightMaterial = new THREE.MeshStandardMaterial({
-            color: 0x00ffff,
-            emissive: 0x00ffff,
-            emissiveIntensity: 0.5,
+        // Glass Platform
+        const glassMat = new THREE.MeshPhysicalMaterial({
+            color: 0xffffff,
+            metalness: 0.1,
+            roughness: 0.05,
+            transmission: 0.9, // Glass
+            thickness: 1.0,
             transparent: true,
-            opacity: 0.5
+            opacity: 1.0
         });
+
+        // --- Geometry Construction ---
+        const mainGroup = new THREE.Group();
+        scene.add(mainGroup);
+
+        // 1. The Platform (Sleek floating base)
+        const platformGeo = new THREE.CylinderGeometry(9, 8, 0.5, 64);
+        const platform = new THREE.Mesh(platformGeo, glassMat);
+        platform.position.y = -0.5;
+        platform.receiveShadow = true;
+        mainGroup.add(platform);
+
+        // Inner glowing ring
+        const ringGeo = new THREE.TorusGeometry(8.2, 0.05, 16, 100);
+        const ringMat = new THREE.MeshBasicMaterial({ color: 0x00aaff });
+        const ring = new THREE.Mesh(ringGeo, ringMat);
+        ring.rotation.x = Math.PI / 2;
+        ring.position.y = -0.5;
+        mainGroup.add(ring);
+
+        // 2. The Board
+        const boardGroup = new THREE.Group();
+        const squareSize = 1.4;
+        const boardSize = 8 * squareSize;
+        const offset = (boardSize - squareSize) / 2;
 
         for (let x = 0; x < 8; x++) {
             for (let z = 0; z < 8; z++) {
                 const isDark = (x + z) % 2 === 1;
-                const geometry = new THREE.BoxGeometry(squareSize, 0.2, squareSize);
-                const material = isDark ? darkMaterial : whiteMaterial;
+
+                // Rounded squares for premium feel
+                const geometry = new THREE.BoxGeometry(squareSize * 0.95, 0.2, squareSize * 0.95);
+
+                // Use the requested Deep Blue & White scheme
+                const material = isDark ? darkPieceMat : whitePieceMat;
 
                 const square = new THREE.Mesh(geometry, material);
                 square.position.set(x * squareSize - offset, 0, z * squareSize - offset);
                 square.receiveShadow = true;
-
-                // Add a subtle glow/border to each square for the "magical" feel
-                const edges = new THREE.EdgesGeometry(geometry);
-                const lineMaterial = new THREE.LineBasicMaterial({ color: 0x4444ff, transparent: true, opacity: 0.2 });
-                const wireframe = new THREE.LineSegments(edges, lineMaterial);
-                square.add(wireframe);
+                square.castShadow = true;
 
                 boardGroup.add(square);
             }
         }
+        mainGroup.add(boardGroup);
 
-        // Floating Animation Group
-        const floatingGroup = new THREE.Group();
-        floatingGroup.add(boardGroup);
-        scene.add(floatingGroup);
-
-        // Add a base platform (optional, for "floating" reference)
-        // const baseGeo = new THREE.CylinderGeometry(10, 12, 0.5, 64);
-        // const baseMat = new THREE.MeshStandardMaterial({ color: 0x000000, roughness: 0.5, metalness: 0.8 });
-        // const base = new THREE.Mesh(baseGeo, baseMat);
-        // base.position.y = -5;
-        // scene.add(base);
-
-        // Particle System (Magical Dust)
-        const particlesGeometry = new THREE.BufferGeometry();
-        const particlesCount = 500;
-        const posArray = new Float32Array(particlesCount * 3);
-
-        for (let i = 0; i < particlesCount * 3; i++) {
-            posArray[i] = (Math.random() - 0.5) * 30; // Spread around
-        }
-
-        particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
-        const particlesMaterial = new THREE.PointsMaterial({
-            size: 0.05,
-            color: 0x00ffff,
-            transparent: true,
-            opacity: 0.8,
-            blending: THREE.AdditiveBlending
+        // 3. Floating Geometric Decor (Abstract Art)
+        const decorGroup = new THREE.Group();
+        const geoShape = new THREE.IcosahedronGeometry(0.3, 0);
+        const geoMat = new THREE.MeshStandardMaterial({
+            color: 0x88ccff,
+            roughness: 0.2,
+            emissive: 0x0044aa,
+            emissiveIntensity: 0.2
         });
-        const particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial);
-        scene.add(particlesMesh);
 
+        for (let i = 0; i < 12; i++) {
+            const mesh = new THREE.Mesh(geoShape, geoMat);
+            const angle = (i / 12) * Math.PI * 2;
+            const radius = 10;
+            mesh.position.set(Math.cos(angle) * radius, Math.random() * 4 - 2, Math.sin(angle) * radius);
+            decorGroup.add(mesh);
+        }
+        mainGroup.add(decorGroup);
 
-        // Animation Loop
+        // 4. Subtle Floor Reflection Plane (Shadow catcher)
+        const planeGeo = new THREE.PlaneGeometry(100, 100);
+        const planeMat = new THREE.ShadowMaterial({ opacity: 0.05, color: 0x1e2b39 });
+        const plane = new THREE.Mesh(planeGeo, planeMat);
+        plane.rotation.x = -Math.PI / 2;
+        plane.position.y = -4;
+        scene.add(plane);
+
+        // --- Animation ---
         const clock = new THREE.Clock();
 
         function animate() {
             requestAnimationFrame(animate);
-
             const time = clock.getElapsedTime();
 
-            // Floating effect
-            floatingGroup.position.y = Math.sin(time * 0.5) * 0.5;
-            floatingGroup.rotation.y = Math.sin(time * 0.1) * 0.05; // Slight rotation
+            // Gentle floating of the entire platform
+            mainGroup.position.y = Math.sin(time * 0.5) * 0.2;
 
-            // Particle animation
-            particlesMesh.rotation.y = time * 0.05;
-
-            // Pulse lights
-            pointLight1.intensity = 5 + Math.sin(time * 2) * 2;
-            pointLight2.intensity = 5 + Math.cos(time * 2) * 2;
+            // Rotate decor elements
+            decorGroup.rotation.y = time * 0.05;
+            decorGroup.children.forEach((child, i) => {
+                child.position.y += Math.sin(time * 2 + i) * 0.005;
+                child.rotation.x += 0.01;
+                child.rotation.z += 0.01;
+            });
 
             controls.update();
             renderer.render(scene, camera);
