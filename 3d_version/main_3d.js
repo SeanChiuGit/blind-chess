@@ -5,8 +5,8 @@ import TWEEN from 'https://unpkg.com/@tweenjs/tween.js@23.1.2/dist/tween.esm.js'
 
 // Import Game Logic
 import { initFirebase, createOrJoinRoom, sendState, assignPlayerColor, onStateChange, submitPlayerModeChoice, onBothModesSelectedAndMatched, onBothKingsSelected, onBothSetupsReady } from './firebase.js';
-import { initGame, getGameState, applyGameState, checkGameOver, turn, playerColor, setBoard } from './game.js';
-import { checkVictoryCondition } from './rules.js';
+import { initGame, getGameState, applyGameState, turn, playerColor, setBoard, movePiece } from './game.js';
+import { checkVictoryCondition, getValidMoves } from './rules.js';
 import { enterDarkChessSetup, localGuesses } from './darkChessSetup.js';
 import { selectKing } from './hiddenking.js';
 
@@ -17,6 +17,9 @@ let mainGroup, boardGroup, decorGroup;
 const pieces = []; // 3D Piece Objects
 const squares = []; // 3D Square Objects
 let selectedPiece = null;
+let validMoves = [];
+let lastMoveStart = null;
+let lastMoveEnd = null;
 let myTurn = false;
 let currentTurnColor = 'white';
 let gameMode = null;
@@ -93,8 +96,6 @@ function init() {
     initFirebase();
 
     // 7. Event Listeners
-    // 7. Event Listeners
-    // 7. Event Listeners
     window.addEventListener('resize', onWindowResize);
     window.addEventListener('click', onMouseClick);
 }
@@ -132,7 +133,6 @@ function create3DUI() {
     object.scale.set(0.02, 0.02, 0.02);
     scene.add(object);
 
-    // Attach Logic
     const btn = div.querySelector('#joinBtn');
     const input = div.querySelector('#roomInput');
     const status = div.querySelector('#status');
@@ -418,6 +418,41 @@ function update3DBoard(boardState) {
             }
         }
     }
+
+    // Highlight Last Move
+    if (getGameState().lastMove) {
+        const { from, to } = getGameState().lastMove;
+        highlightSquare(from, 0xaaaa00, 0.5); // Yellowish for start
+        highlightSquare(to, 0xffff00, 0.5);   // Bright yellow for end
+    }
+}
+
+function highlightSquare(pos, colorHex, opacity = 0.5) {
+    // Convert algebraic to grid
+    const file = pos.charAt(0);
+    const rank = parseInt(pos.charAt(1));
+    const x = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'].indexOf(file);
+    const z = 8 - rank;
+
+    const square = squares.find(s => s.userData.gridX === x && s.userData.gridZ === z);
+    if (square) {
+        const highlight = new THREE.Mesh(
+            new THREE.BoxGeometry(1.4, 0.25, 1.4),
+            new THREE.MeshBasicMaterial({ color: colorHex, transparent: true, opacity: opacity })
+        );
+        highlight.position.copy(square.position);
+        highlight.position.y = 0.05; // Slightly above board
+        highlight.userData.isHighlight = true;
+        boardGroup.add(highlight);
+    }
+}
+
+function clearHighlights() {
+    for (let i = boardGroup.children.length - 1; i >= 0; i--) {
+        if (boardGroup.children[i].userData.isHighlight) {
+            boardGroup.remove(boardGroup.children[i]);
+        }
+    }
 }
 
 // --- Detailed Piece Generation ---
@@ -603,10 +638,98 @@ function onMouseClick(event) {
     }
 
     if (clickedPiece) {
-        // Check if it's a hidden opponent piece
+        // 1. Handle Guessing (Opponent Hidden Pieces)
         if (clickedPiece.userData.renderType === 'hidden' || (clickedPiece.userData.color !== myColor && gameMode === 'blind_chess')) {
             showGuessMenu3D(clickedPiece, event.clientX, event.clientY);
+            return;
         }
+
+        // 2. Handle Selection (My Pieces)
+        if (clickedPiece.userData.color === myColor && myTurn) {
+            // Select Piece
+            selectedPiece = clickedPiece;
+            clearHighlights();
+            highlightSquare(getPosFromObj(selectedPiece), 0x00ff00); // Green for selected
+
+            // Calculate Valid Moves
+            const moves = getValidMoves(getPosFromObj(selectedPiece), { type: selectedPiece.userData.realType, color: selectedPiece.userData.color }, getGameState().board);
+            moves.forEach(pos => {
+                highlightSquare(pos, 0x0000ff, 0.3); // Blue for valid moves
+            });
+
+            return;
+        }
+
+        // 3. Handle Capture (Clicking opponent piece to capture)
+        if (selectedPiece && clickedPiece.userData.color !== myColor && myTurn) {
+            const from = getPosFromObj(selectedPiece);
+            const to = getPosFromObj(clickedPiece);
+            attemptMove(from, to);
+            return;
+        }
+    }
+
+    // 4. Handle Move to Empty Square
+    // Raycast for squares
+    const squareIntersects = raycaster.intersectObjects(squares, true);
+    if (squareIntersects.length > 0 && selectedPiece && myTurn) {
+        const squareObj = squareIntersects[0].object;
+        const from = getPosFromObj(selectedPiece);
+        const to = getPosFromSquare(squareObj);
+
+        // Don't move to self
+        if (from !== to) {
+            attemptMove(from, to);
+        }
+    }
+}
+
+function getPosFromObj(pieceObj) {
+    // Reverse engineer position from 3D coordinates or use stored ID if it maps to pos
+    // But pieces move, so grid coords are better.
+    // Actually, we can just find the closest square.
+    const x = Math.round((pieceObj.position.x + 4.9) / 1.4);
+    const z = Math.round((pieceObj.position.z + 4.9) / 1.4);
+    // Wait, let's use the logic from update3DBoard reversed:
+    // worldX = x * 1.4 - 4.9
+    // x = (worldX + 4.9) / 1.4
+    const gridX = Math.round((pieceObj.position.x + 4.9) / 1.4);
+    const gridZ = Math.round((pieceObj.position.z + 4.9) / 1.4);
+
+    const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+    const file = files[gridX];
+    const rank = 8 - gridZ;
+    return file + rank;
+}
+
+function getPosFromSquare(squareObj) {
+    const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+    const file = files[squareObj.userData.gridX];
+    const rank = 8 - squareObj.userData.gridZ;
+    return file + rank;
+}
+
+function attemptMove(from, to) {
+    const result = movePiece(from, to);
+    if (result) {
+        // Move successful locally
+        selectedPiece = null;
+        clearHighlights();
+
+        // Update Board
+        update3DBoard(getGameState().board);
+
+        // Send State
+        sendState(getGameState());
+
+        // Check Game Over
+        const gameOver = checkVictoryCondition(getGameState().board, gameMode);
+        if (gameOver) {
+            alert("Game Over! Winner: " + gameOver);
+        }
+    } else {
+        console.log("Invalid Move");
+        // Optional: Shake piece or show error
     }
 }
 
