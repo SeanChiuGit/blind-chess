@@ -1,6 +1,7 @@
-
 export function onStateChange(callback) {
-  roomRef.on('value', snapshot => callback(snapshot.val()));
+  const handler = snapshot => callback(snapshot.val());
+  roomRef.on('value', handler);
+  return () => roomRef.off('value', handler);
 }
 
 export let db, roomRef;
@@ -26,10 +27,12 @@ export function initFirebase() {
 
 export function createOrJoinRoom(roomId, onData) {
   roomRef = db.ref("rooms/" + roomId);
-  roomRef.on("value", (snapshot) => {
+  const handler = (snapshot) => {
     const data = snapshot.val();
     if (data) onData(data);
-  });
+  };
+  roomRef.on("value", handler);
+  return () => roomRef.off("value", handler);
 }
 
 export function sendState(state) {
@@ -80,12 +83,14 @@ export async function assignPlayerColor(roomId) {
 export function onBothKingsSelected(roomId, callback) {
   const hiddenRef = firebase.database().ref(`rooms/${roomId}/hiddenKings`);
 
-  hiddenRef.on("value", (snapshot) => {
+  const handler = (snapshot) => {
     const data = snapshot.val();
     if (data && data.white && data.black) {
       callback(data); // 两人都已选择，触发回调
     }
-  });
+  };
+  hiddenRef.on("value", handler);
+  return () => hiddenRef.off("value", handler);
 }
 
 export function submitPlayerModeChoice(roomId, playerSlot, mode) {
@@ -94,15 +99,19 @@ export function submitPlayerModeChoice(roomId, playerSlot, mode) {
 
 export function onBothModesSelectedAndMatched(roomId, callback) {
   const ref = firebase.database().ref(`rooms/${roomId}/selections`);
-  ref.on("value", snapshot => {
+  const handler = snapshot => {
     const selections = snapshot.val();
     if (selections?.player1 && selections?.player2) {
       if (selections.player1 === selections.player2) {
+        // Clear rematch flag now that new game is starting
+        firebase.database().ref(`rooms/${roomId}/rematch`).set(null);
         callback(selections.player1); // 开始游戏
       }
       // ⚠️ 不一致时什么都不做
     }
-  });
+  };
+  ref.on("value", handler);
+  return () => ref.off("value", handler);
 }
 
 export function submitDarkChessSetup(roomId, playerColor, board) {
@@ -112,12 +121,17 @@ export function submitDarkChessSetup(roomId, playerColor, board) {
 
 export function onBothSetupsReady(roomId, callback) {
   const ref = firebase.database().ref(`rooms/${roomId}/setup`);
-  ref.on("value", snapshot => {
+  const handler = snapshot => {
+    if (!snapshot.exists()) return;
     const setups = snapshot.val();
+    console.log("onBothSetupsReady fired:", setups);
     if (setups?.white && setups?.black) {
+      console.log("Both setups present, triggering callback");
       callback(setups); // 双方都提交了布局，启动游戏
     }
-  });
+  };
+  ref.on("value", handler);
+  return () => ref.off("value", handler);
 }
 
 export function requestRematch(roomId, color) {
@@ -126,15 +140,16 @@ export function requestRematch(roomId, color) {
 
 export function onRematchStateChange(roomId, callback) {
   const ref = firebase.database().ref(`rooms/${roomId}/rematch`);
-  ref.on("value", snapshot => {
+  const handler = snapshot => {
     const data = snapshot.val();
     if (data && data.white && data.black) {
       // Both accepted rematch
       callback();
-      // Reset rematch flags
-      ref.set(null);
+      // Do NOT clear here, wait for game start
     }
-  });
+  };
+  ref.on("value", handler);
+  return () => ref.off("value", handler);
 }
 
 export function resetRoomForRematch(roomId) {
@@ -142,8 +157,8 @@ export function resetRoomForRematch(roomId) {
   const updates = {};
   updates[`rooms/${roomId}/game`] = null;
   updates[`rooms/${roomId}/setup`] = null;
-  // updates[`rooms/${roomId}/selections`] = null; // Keep mode selection for rematch
-  updates[`rooms/${roomId}/rematch`] = null;
+  updates[`rooms/${roomId}/selections`] = null; // Force re-selection
+  // updates[`rooms/${roomId}/rematch`] = null; // Keep rematch flag until new game starts
   // Note: We keep players to maintain connection, but might swap colors locally
-  firebase.database().ref().update(updates);
+  return firebase.database().ref().update(updates);
 }
