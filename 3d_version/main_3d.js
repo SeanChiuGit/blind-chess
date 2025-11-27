@@ -55,14 +55,8 @@ animate();
 function init() {
     // 1. Scene Setup
     scene = new THREE.Scene();
-    scene.background = new THREE.Color(0xf5f7fa);
-    scene.fog = new THREE.Fog(0xf5f7fa, 10, 50);
 
-    camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 12, 18); // Initial view for menu
-    camera.lookAt(0, 0, 0);
-
-    // 2. Renderers
+    // 2. Renderers (Initialize first to access capabilities)
     renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.shadowMap.enabled = true;
@@ -77,6 +71,32 @@ function init() {
     cssRenderer.domElement.style.top = '0';
     cssRenderer.domElement.style.zIndex = '1'; // On top for interaction
     document.getElementById('css-container').appendChild(cssRenderer.domElement);
+
+    // Create SkyDome (Inside a sphere effect)
+    const loader = new THREE.TextureLoader();
+    const texture = loader.load('../assets/skybox_texture_v3.png');
+    texture.colorSpace = THREE.SRGBColorSpace;
+    texture.minFilter = THREE.LinearFilter;
+    texture.magFilter = THREE.LinearFilter;
+    texture.generateMipmaps = false;
+    // Maximize texture quality
+    const maxAnisotropy = renderer.capabilities.getMaxAnisotropy();
+    texture.anisotropy = maxAnisotropy;
+
+    const skyGeo = new THREE.SphereGeometry(500, 60, 40);
+    // Invert the geometry to make it viewable from inside
+    skyGeo.scale(-1, 1, 1);
+
+    const skyMat = new THREE.MeshBasicMaterial({
+        map: texture
+    });
+
+    const skyMesh = new THREE.Mesh(skyGeo, skyMat);
+    scene.add(skyMesh);
+
+    camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 12, 18); // Initial view for menu
+    camera.lookAt(0, 0, 0);
 
     // 3. Lights
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
