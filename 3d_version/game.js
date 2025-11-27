@@ -20,6 +20,10 @@ export function initGame(color) {
   // selectKing(playerColor, board, roomId);
 }
 
+export function setBoard(newBoard) {
+  board = newBoard;
+}
+
 
 export function movePiece(from, to) {
   const movingPiece = board[from];

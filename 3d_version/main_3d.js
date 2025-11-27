@@ -5,9 +5,9 @@ import TWEEN from 'https://unpkg.com/@tweenjs/tween.js@23.1.2/dist/tween.esm.js'
 
 // Import Game Logic
 import { initFirebase, createOrJoinRoom, sendState, assignPlayerColor, onStateChange, submitPlayerModeChoice, onBothModesSelectedAndMatched, onBothKingsSelected, onBothSetupsReady } from './firebase.js';
-import { initGame, getGameState, applyGameState, checkGameOver, turn, playerColor } from './game.js';
+import { initGame, getGameState, applyGameState, checkGameOver, turn, playerColor, setBoard } from './game.js';
 import { checkVictoryCondition } from './rules.js';
-import { enterDarkChessSetup } from './darkChessSetup.js';
+import { enterDarkChessSetup, localGuesses } from './darkChessSetup.js';
 import { selectKing } from './hiddenking.js';
 
 // --- Global Variables ---
@@ -93,7 +93,10 @@ function init() {
     initFirebase();
 
     // 7. Event Listeners
+    // 7. Event Listeners
+    // 7. Event Listeners
     window.addEventListener('resize', onWindowResize);
+    window.addEventListener('click', onMouseClick);
 }
 
 // --- 3D UI Construction ---
@@ -285,8 +288,40 @@ function startClassicGame() {
 }
 
 function startBlindGame() {
-    // Placeholder for Blind Logic
-    console.log("Starting Blind Chess Logic...");
+    console.log("Starting Blind Chess Setup...");
+    enterDarkChessSetup(roomId, myColor);
+
+    onBothSetupsReady(roomId, (setups) => {
+        console.log("Both setups ready!", setups);
+
+        // Remove setup UI
+        const setupOverlay = document.querySelector('.setup-overlay');
+        if (setupOverlay) setupOverlay.remove();
+        const style = document.getElementById('dark-chess-setup-styles');
+        if (style) style.remove();
+
+        // Merge setups
+        const initialBoard = { ...setups.white, ...setups.black };
+
+        // Initialize game
+        setBoard(initialBoard);
+
+        // Initial Render
+        update3DBoard(getGameState().board);
+
+        if (myColor === 'white') {
+            sendState(getGameState());
+        }
+
+        onStateChange((remoteState) => {
+            const gameState = remoteState?.game;
+            if (!gameState || !gameState.board) return;
+
+            applyGameState(gameState);
+            myTurn = gameState.turn === myColor;
+            update3DBoard(gameState.board);
+        });
+    });
 }
 
 // --- 3D Board Construction ---
@@ -337,16 +372,47 @@ function update3DBoard(boardState) {
     const squareSize = 1.4;
     const boardSize = 8 * squareSize;
     const offset = (boardSize - squareSize) / 2;
+    const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
 
-    // Iterate board state (8x8 array)
+    // Iterate board state (Object: "e2" -> piece)
     for (let z = 0; z < 8; z++) {
         for (let x = 0; x < 8; x++) {
-            const pieceData = boardState[z][x];
+            // Convert grid to algebraic
+            // z=0 -> rank 8, z=7 -> rank 1
+            const rank = 8 - z;
+            const file = files[x];
+            const pos = file + rank;
+
+            const pieceData = boardState[pos];
+
             if (pieceData) {
-                const pieceObj = createPiece(pieceData.type, pieceData.color);
+                let renderType = pieceData.type;
+                const isOpponent = pieceData.color !== myColor;
+
+                // Blind Chess Logic
+                if (gameMode === 'blind_chess' && isOpponent) {
+                    const guess = localGuesses[pieceData.id];
+                    if (guess) {
+                        renderType = guess;
+                    } else {
+                        renderType = 'hidden';
+                    }
+                }
+
+                const pieceObj = createPiece(renderType, pieceData.color);
                 const worldX = x * squareSize - offset;
                 const worldZ = z * squareSize - offset;
                 pieceObj.position.set(worldX, 0.1, worldZ);
+
+                // Store metadata for interaction
+                pieceObj.userData = {
+                    id: pieceData.id,
+                    type: 'piece',
+                    realType: pieceData.type,
+                    renderType: renderType,
+                    color: pieceData.color
+                };
+
                 boardGroup.add(pieceObj);
                 pieces.push(pieceObj);
             }
@@ -354,33 +420,275 @@ function update3DBoard(boardState) {
     }
 }
 
+// --- Detailed Piece Generation ---
+function createQuestionMark(color) {
+    const group = new THREE.Group();
+    // Use the opponent's color for the question mark, or a specific "mystery" color blended with it
+    const baseColor = color === 'white' ? 0xffffff : 0x3a5a7a;
+
+    const material = new THREE.MeshPhysicalMaterial({
+        color: baseColor,
+        metalness: 0.1,
+        roughness: 0.1,
+        transmission: 0.6,
+        thickness: 1.5,
+        ior: 1.5,
+        clearcoat: 1.0,
+        transparent: true,
+        opacity: 0.8,
+        emissive: baseColor,
+        emissiveIntensity: 0.2
+    });
+
+    // Top Curve (Torus segment)
+    const curve = new THREE.TorusGeometry(0.3, 0.1, 16, 32, Math.PI * 1.5);
+    const curveMesh = new THREE.Mesh(curve, material);
+    curveMesh.rotation.z = Math.PI / 4;
+    curveMesh.position.set(0, 0.8, 0);
+    group.add(curveMesh);
+
+    // Vertical Stem
+    const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.05, 0.4, 16), material);
+    stem.position.set(0, 0.5, 0);
+    group.add(stem);
+
+    // Dot
+    const dot = new THREE.Mesh(new THREE.SphereGeometry(0.12, 16, 16), material);
+    dot.position.set(0, 0.15, 0);
+    group.add(dot);
+
+    // Floating Animation Helper
+    group.userData.isFloating = true;
+
+    return group;
+}
+
 function createPiece(type, color) {
-    // Reuse the piece creation logic from demo
-    // Simplified for brevity, assume standard shapes
+    if (type === 'hidden') {
+        return createQuestionMark(color);
+    }
+
     const group = new THREE.Group();
     const material = color === 'white' ? whitePieceMat : darkPieceMat;
 
-    // Base
-    const base = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.45, 0.1, 32), material);
-    base.position.y = 0.05;
+    // Common Base for all pieces
+    const baseGeo = new THREE.CylinderGeometry(0.45, 0.5, 0.15, 32);
+    const base = new THREE.Mesh(baseGeo, material);
+    base.position.y = 0.075;
     group.add(base);
 
-    // Simple representation for now
-    let geo;
-    if (type === 'pawn') geo = new THREE.SphereGeometry(0.3, 32, 32);
-    else if (type === 'rook') geo = new THREE.BoxGeometry(0.5, 0.8, 0.5);
-    else if (type === 'knight') geo = new THREE.ConeGeometry(0.3, 0.8, 32);
-    else if (type === 'bishop') geo = new THREE.CylinderGeometry(0.1, 0.3, 0.9, 32);
-    else if (type === 'queen') geo = new THREE.TorusKnotGeometry(0.2, 0.05, 64, 8);
-    else if (type === 'king') geo = new THREE.CylinderGeometry(0.3, 0.3, 1.2, 32);
-
-    if (geo) {
-        const mesh = new THREE.Mesh(geo, material);
-        mesh.position.y = 0.5;
+    // Helper to add parts
+    function addPart(geometry, y, scale = 1) {
+        const mesh = new THREE.Mesh(geometry, material);
+        mesh.position.y = y;
+        mesh.scale.setScalar(scale);
         group.add(mesh);
+        return mesh;
     }
 
+    if (type === 'pawn') {
+        // Tapered body
+        addPart(new THREE.CylinderGeometry(0.15, 0.35, 0.6, 16), 0.45);
+        // Collar
+        addPart(new THREE.TorusGeometry(0.15, 0.05, 16, 32), 0.75).rotation.x = Math.PI / 2;
+        // Head
+        addPart(new THREE.SphereGeometry(0.25, 32, 32), 0.95);
+
+    } else if (type === 'rook') {
+        // Column
+        addPart(new THREE.CylinderGeometry(0.35, 0.4, 0.8, 32), 0.55);
+        // Top rim
+        addPart(new THREE.CylinderGeometry(0.45, 0.35, 0.3, 32), 1.05);
+        // Crenellations (4 blocks)
+        for (let i = 0; i < 4; i++) {
+            const block = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.15, 0.15), material);
+            block.position.y = 1.25;
+            const angle = (i / 4) * Math.PI * 2;
+            block.position.x = Math.cos(angle) * 0.25;
+            block.position.z = Math.sin(angle) * 0.25;
+            group.add(block);
+        }
+
+    } else if (type === 'knight') {
+        // Base stand
+        addPart(new THREE.CylinderGeometry(0.3, 0.4, 0.4, 32), 0.35);
+
+        // Horse Head Shape (Extruded)
+        const shape = new THREE.Shape();
+        shape.moveTo(0, 0);
+        shape.lineTo(0.2, 0.1); // nose bottom
+        shape.lineTo(0.25, 0.3); // nose tip
+        shape.lineTo(0.15, 0.5); // forehead
+        shape.lineTo(0.1, 0.7); // ear tip
+        shape.lineTo(0, 0.6); // ear base
+        shape.lineTo(-0.15, 0.4); // neck back
+        shape.lineTo(-0.2, 0); // neck base
+        shape.lineTo(0, 0);
+
+        const extrudeSettings = { depth: 0.2, bevelEnabled: true, bevelThickness: 0.05, bevelSize: 0.05, bevelSegments: 2 };
+        const headGeo = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+        const head = new THREE.Mesh(headGeo, material);
+        head.position.set(0, 0.55, -0.1);
+        head.rotation.y = color === 'white' ? Math.PI / 2 : -Math.PI / 2; // Face opponent
+        // Center the extrusion
+        head.geometry.center();
+        // Adjust position after centering
+        head.position.y = 0.9;
+        group.add(head);
+
+    } else if (type === 'bishop') {
+        // Tall body
+        addPart(new THREE.CylinderGeometry(0.15, 0.35, 0.9, 32), 0.6);
+        // Collar
+        addPart(new THREE.TorusGeometry(0.2, 0.05, 16, 32), 1.05).rotation.x = Math.PI / 2;
+        // Mitre Head
+        const head = addPart(new THREE.SphereGeometry(0.25, 32, 32), 1.25);
+        head.scale.set(0.8, 1.2, 0.8);
+        // Small ball on top
+        addPart(new THREE.SphereGeometry(0.08, 16, 16), 1.6);
+
+    } else if (type === 'queen') {
+        // Body
+        addPart(new THREE.CylinderGeometry(0.2, 0.4, 1.2, 32), 0.75);
+        // Collar
+        addPart(new THREE.TorusGeometry(0.25, 0.05, 16, 32), 1.35).rotation.x = Math.PI / 2;
+        // Crown
+        const crown = addPart(new THREE.CylinderGeometry(0.3, 0.15, 0.3, 16), 1.5);
+        // Crown points
+        const points = addPart(new THREE.TorusGeometry(0.25, 0.05, 16, 6), 1.65);
+        points.rotation.x = Math.PI / 2;
+        // Top ball
+        addPart(new THREE.SphereGeometry(0.15, 32, 32), 1.7);
+
+    } else if (type === 'king') {
+        // Body
+        addPart(new THREE.CylinderGeometry(0.25, 0.45, 1.3, 32), 0.8);
+        // Collar
+        addPart(new THREE.TorusGeometry(0.25, 0.08, 16, 32), 1.45).rotation.x = Math.PI / 2;
+        // Top Flare
+        addPart(new THREE.CylinderGeometry(0.35, 0.2, 0.2, 32), 1.6);
+        // Cross
+        const v = addPart(new THREE.BoxGeometry(0.1, 0.35, 0.1), 1.9);
+        const h = addPart(new THREE.BoxGeometry(0.3, 0.1, 0.1), 1.95);
+    }
+
+    group.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
+
     return group;
+}
+
+// --- Interaction Logic ---
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+
+function onMouseClick(event) {
+    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+    raycaster.setFromCamera(mouse, camera);
+    const intersects = raycaster.intersectObjects(boardGroup.children, true);
+
+    let clickedPiece = null;
+
+    for (let hit of intersects) {
+        let obj = hit.object;
+        while (obj.parent && obj.parent !== boardGroup) {
+            obj = obj.parent;
+        }
+
+        if (obj.userData.type === 'piece') {
+            clickedPiece = obj;
+            break;
+        }
+    }
+
+    if (clickedPiece) {
+        // Check if it's a hidden opponent piece
+        if (clickedPiece.userData.renderType === 'hidden' || (clickedPiece.userData.color !== myColor && gameMode === 'blind_chess')) {
+            showGuessMenu3D(clickedPiece, event.clientX, event.clientY);
+        }
+    }
+}
+
+function showGuessMenu3D(pieceObj, x, y) {
+    // Remove existing menu
+    const existing = document.getElementById('guess-menu');
+    if (existing) existing.remove();
+
+    const menu = document.createElement('div');
+    menu.id = 'guess-menu';
+    menu.style.position = 'absolute';
+    menu.style.left = x + 'px';
+    menu.style.top = y + 'px';
+    menu.style.background = 'rgba(30, 43, 57, 0.95)';
+    menu.style.padding = '15px';
+    menu.style.borderRadius = '12px';
+    menu.style.border = '1px solid rgba(255, 255, 255, 0.2)';
+    menu.style.display = 'grid';
+    menu.style.gridTemplateColumns = 'repeat(3, 1fr)';
+    menu.style.gap = '8px';
+    menu.style.zIndex = '1000';
+    menu.style.boxShadow = '0 4px 20px rgba(0,0,0,0.5)';
+    menu.style.backdropFilter = 'blur(10px)';
+
+    const options = ['pawn', 'rook', 'knight', 'bishop', 'queen', 'king'];
+
+    options.forEach(type => {
+        const btn = document.createElement('button');
+        // Simple text for now, could be icons
+        btn.innerText = type.charAt(0).toUpperCase() + type.slice(1);
+        btn.style.background = 'rgba(255, 255, 255, 0.1)';
+        btn.style.color = 'white';
+        btn.style.border = '1px solid rgba(255, 255, 255, 0.1)';
+        btn.style.padding = '8px';
+        btn.style.cursor = 'pointer';
+        btn.style.borderRadius = '6px';
+        btn.style.fontFamily = "'Inter', sans-serif";
+        btn.style.transition = 'background 0.2s';
+
+        btn.onmouseover = () => btn.style.background = 'rgba(255, 255, 255, 0.2)';
+        btn.onmouseout = () => btn.style.background = 'rgba(255, 255, 255, 0.1)';
+
+        btn.onclick = () => {
+            localGuesses[pieceObj.userData.id] = type;
+            menu.remove();
+            // Refresh board to show the guess
+            update3DBoard(getGameState().board);
+        };
+        menu.appendChild(btn);
+    });
+
+    // Clear Guess Button
+    const clearBtn = document.createElement('button');
+    clearBtn.innerText = 'Clear Guess';
+    clearBtn.style.gridColumn = '1 / -1';
+    clearBtn.style.background = 'rgba(255, 100, 100, 0.2)';
+    clearBtn.style.color = '#ffaaaa';
+    clearBtn.style.border = '1px solid rgba(255, 100, 100, 0.3)';
+    clearBtn.style.padding = '8px';
+    clearBtn.style.cursor = 'pointer';
+    clearBtn.style.borderRadius = '6px';
+    clearBtn.style.marginTop = '5px';
+
+    clearBtn.onclick = () => {
+        delete localGuesses[pieceObj.userData.id];
+        menu.remove();
+        update3DBoard(getGameState().board);
+    };
+    menu.appendChild(clearBtn);
+
+    // Close on click outside
+    setTimeout(() => {
+        const closeHandler = (e) => {
+            if (!menu.contains(e.target)) {
+                menu.remove();
+                window.removeEventListener('click', closeHandler);
+            }
+        };
+        window.addEventListener('click', closeHandler);
+    }, 100);
+
+    document.body.appendChild(menu);
 }
 
 // --- Animation & Resize ---
@@ -395,6 +703,16 @@ function animate() {
     requestAnimationFrame(animate);
     TWEEN.update();
     controls.update();
+
+    // Animate Floating Question Marks
+    const time = Date.now() * 0.001;
+    pieces.forEach(p => {
+        if (p.userData.renderType === 'hidden') {
+            p.position.y = 0.1 + Math.sin(time * 2 + p.position.x) * 0.05;
+            p.rotation.y = time;
+        }
+    });
+
     renderer.render(scene, camera);
     cssRenderer.render(scene, camera);
 }
