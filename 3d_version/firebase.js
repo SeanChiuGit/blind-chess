@@ -119,3 +119,31 @@ export function onBothSetupsReady(roomId, callback) {
     }
   });
 }
+
+export function requestRematch(roomId, color) {
+  firebase.database().ref(`rooms/${roomId}/rematch/${color}`).set(true);
+}
+
+export function onRematchStateChange(roomId, callback) {
+  const ref = firebase.database().ref(`rooms/${roomId}/rematch`);
+  ref.on("value", snapshot => {
+    const data = snapshot.val();
+    if (data && data.white && data.black) {
+      // Both accepted rematch
+      callback();
+      // Reset rematch flags
+      ref.set(null);
+    }
+  });
+}
+
+export function resetRoomForRematch(roomId) {
+  // Clear game state, setups, and selections to restart flow
+  const updates = {};
+  updates[`rooms/${roomId}/game`] = null;
+  updates[`rooms/${roomId}/setup`] = null;
+  // updates[`rooms/${roomId}/selections`] = null; // Keep mode selection for rematch
+  updates[`rooms/${roomId}/rematch`] = null;
+  // Note: We keep players to maintain connection, but might swap colors locally
+  firebase.database().ref().update(updates);
+}

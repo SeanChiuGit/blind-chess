@@ -6,7 +6,7 @@ import { sendState } from './firebase.js'; // 引入 sendState 函数
 import { showGuessMenu, localGuesses } from './darkChessSetup.js'; // 引入 showGuessMenu 函数
 import { Chess3DView } from './3d_view.js';
 
-export let board, turn, playerColor, lastMove;
+export let board, turn, playerColor, lastMove, history;
 let chess3D = null;
 // export const localGuesses = {}; // { e4: "knight", g7: "queen" }
 
@@ -16,6 +16,7 @@ export function initGame(color) {
   board = initBoard();
   turn = 'white';
   lastMove = null;
+  history = [];
 
   // // 👑 启动选择隐藏国王界面
   // selectKing(playerColor, board, roomId);
@@ -44,6 +45,16 @@ export function movePiece(from, to) {
     delete localGuesses[targetPiece.id];
   }
 
+  // Record move for history before modifying board
+  const moveRecord = {
+    from,
+    to,
+    piece: movingPiece,
+    captured: targetPiece ? targetPiece : null,
+    turn: turn
+  };
+  history.push(moveRecord);
+
   // ✅ 执行移动
   board[to] = movingPiece;
   delete board[from];
@@ -52,17 +63,18 @@ export function movePiece(from, to) {
   turn = turn === "white" ? "black" : "white";
   lastMove = { from, to };
 
-  return { board, turn, lastMove };
+  return { board, turn, lastMove, history };
 }
 
 export function getGameState() {
-  return { board, turn, lastMove };
+  return { board, turn, lastMove, history };
 }
 
 export function applyGameState(state) {
   board = state.board;
   turn = state.turn;
   lastMove = state.lastMove;
+  history = state.history || [];
 }
 
 export function initBoard() {

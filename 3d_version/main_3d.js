@@ -4,7 +4,7 @@ import { CSS3DRenderer, CSS3DObject } from 'three/addons/renderers/CSS3DRenderer
 import TWEEN from 'https://unpkg.com/@tweenjs/tween.js@23.1.2/dist/tween.esm.js';
 
 // Import Game Logic
-import { initFirebase, createOrJoinRoom, sendState, assignPlayerColor, onStateChange, submitPlayerModeChoice, onBothModesSelectedAndMatched, onBothKingsSelected, onBothSetupsReady } from './firebase.js';
+import { initFirebase, createOrJoinRoom, sendState, assignPlayerColor, onStateChange, submitPlayerModeChoice, onBothModesSelectedAndMatched, onBothKingsSelected, onBothSetupsReady, requestRematch, onRematchStateChange, resetRoomForRematch } from './firebase.js';
 import { initGame, getGameState, applyGameState, turn, playerColor, setBoard, movePiece } from './game.js';
 import { checkVictoryCondition, getValidMoves } from './rules.js';
 import { enterDarkChessSetup, localGuesses } from './darkChessSetup.js';
@@ -25,6 +25,9 @@ let currentTurnColor = 'white';
 let gameMode = null;
 let roomId = null;
 let myColor = null;
+let replayMode = false;
+let replayIndex = 0;
+let replayHistory = [];
 
 // --- Materials ---
 const darkPieceMat = new THREE.MeshPhysicalMaterial({
@@ -284,6 +287,12 @@ function startClassicGame() {
         applyGameState(gameState);
         myTurn = gameState.turn === myColor;
         update3DBoard(gameState.board);
+
+        // Check Game Over (Remote)
+        const gameOver = checkVictoryCondition(gameState.board, gameMode);
+        if (gameOver) {
+            showGameOverScreen(gameOver);
+        }
     });
 }
 
@@ -320,6 +329,12 @@ function startBlindGame() {
             applyGameState(gameState);
             myTurn = gameState.turn === myColor;
             update3DBoard(gameState.board);
+
+            // Check Game Over (Remote)
+            const gameOver = checkVictoryCondition(gameState.board, gameMode);
+            if (gameOver) {
+                showGameOverScreen(gameOver);
+            }
         });
     });
 }
@@ -617,6 +632,8 @@ const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 
 function onMouseClick(event) {
+    if (replayMode) return; // Disable interaction during replay
+
     mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
     mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
@@ -725,7 +742,7 @@ function attemptMove(from, to) {
         // Check Game Over
         const gameOver = checkVictoryCondition(getGameState().board, gameMode);
         if (gameOver) {
-            alert("Game Over! Winner: " + gameOver);
+            showGameOverScreen(gameOver);
         }
     } else {
         console.log("Invalid Move");
@@ -838,4 +855,265 @@ function animate() {
 
     renderer.render(scene, camera);
     cssRenderer.render(scene, camera);
+}
+
+// --- Game Over & Replay ---
+function showGameOverScreen(winner) {
+    const div = document.createElement('div');
+    div.style.width = '400px';
+    div.style.padding = '30px';
+    div.style.background = 'rgba(30, 43, 57, 0.95)';
+    div.style.backdropFilter = 'blur(10px)';
+    div.style.borderRadius = '20px';
+    div.style.border = '2px solid rgba(255, 255, 255, 0.2)';
+    div.style.boxShadow = '0 20px 50px rgba(0,0,0,0.6)';
+    div.style.textAlign = 'center';
+    div.style.color = 'white';
+    div.style.fontFamily = "'Inter', sans-serif";
+    div.style.pointerEvents = 'none';
+
+    const winColor = winner === 'white' ? '#ffffff' : '#3a5a7a';
+    const winText = winner.toUpperCase();
+
+    div.innerHTML = `
+        <h1 style="margin: 0 0 10px 0; font-size: 2.5em; text-shadow: 0 0 10px ${winColor};">GAME OVER</h1>
+        <h2 style="margin: 0 0 30px 0; font-weight: 300; color: #aaa;">Winner: <span style="color: ${winColor}; font-weight: bold;">${winText}</span></h2>
+        
+        <div style="display: flex; gap: 15px; justify-content: center;">
+            <button id="btnRematch" style="
+                flex: 1; padding: 12px; background: #00aaff; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1em; pointer-events: auto; transition: 0.2s;">
+                PLAY AGAIN
+            </button>
+            <button id="btnReplay" style="
+                flex: 1; padding: 12px; background: #aa00ff; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1em; pointer-events: auto; transition: 0.2s;">
+                REVIEW GAME
+            </button>
+        </div>
+        <p id="rematchStatus" style="margin-top: 15px; font-size: 0.9em; color: #888; height: 1.2em;"></p>
+    `;
+
+    const object = new CSS3DObject(div);
+    object.position.set(0, 5, 0);
+    object.rotation.x = -0.2;
+    object.scale.set(0.02, 0.02, 0.02);
+    scene.add(object);
+
+    // Button Logic
+    const btnRematch = div.querySelector('#btnRematch');
+    const btnReplay = div.querySelector('#btnReplay');
+    const status = div.querySelector('#rematchStatus');
+
+    btnRematch.onclick = () => {
+        btnRematch.disabled = true;
+        btnRematch.style.opacity = 0.5;
+        status.innerText = "Waiting for opponent...";
+        handleRematch(object);
+    };
+
+    btnReplay.onclick = () => {
+        scene.remove(object);
+        startReplay();
+    };
+}
+
+function handleRematch(uiObject) {
+    requestRematch(roomId, myColor);
+
+    onRematchStateChange(roomId, () => {
+        // Both accepted
+        scene.remove(uiObject);
+
+        // Swap Colors
+        myColor = myColor === 'white' ? 'black' : 'white';
+        console.log("Rematch accepted! Swapping to:", myColor);
+
+        // Reset Local State
+        selectedPiece = null;
+        validMoves = [];
+        replayMode = false;
+
+        // If I am now white, I am responsible for resetting the room
+        if (myColor === 'white') {
+            resetRoomForRematch(roomId);
+        }
+
+        // Wait a bit for reset to propagate then restart
+        setTimeout(() => {
+            // Move camera to new perspective
+            const targetPos = myColor === 'white' ? { x: 0, y: 10, z: 12 } : { x: 0, y: 10, z: -12 };
+            new TWEEN.Tween(camera.position)
+                .to(targetPos, 1500)
+                .easing(TWEEN.Easing.Cubic.InOut)
+                .start();
+
+            startGameFlow(roomId, 'player1', myColor); // Slot doesn't strictly matter for logic here, but we reuse flow
+        }, 500);
+    });
+}
+
+function startReplay() {
+    replayMode = true;
+    replayHistory = getGameState().history || [];
+    replayIndex = replayHistory.length; // Start at end
+
+    // Create Replay UI
+    const div = document.createElement('div');
+    div.style.position = 'absolute';
+    div.style.bottom = '30px';
+    div.style.left = '50%';
+    div.style.transform = 'translateX(-50%)';
+    div.style.background = 'rgba(30, 43, 57, 0.9)';
+    div.style.padding = '15px 30px';
+    div.style.borderRadius = '30px';
+    div.style.display = 'flex';
+    div.style.gap = '20px';
+    div.style.zIndex = '1000';
+    div.style.backdropFilter = 'blur(10px)';
+    div.style.border = '1px solid rgba(255,255,255,0.2)';
+
+    div.innerHTML = `
+        <button id="btnPrev" style="background:none; border:none; color:white; font-size:1.5em; cursor:pointer;">❮</button>
+        <span id="moveCounter" style="color:white; font-family:'Inter'; font-size:1.2em; line-height: 1.5em;">${replayIndex} / ${replayHistory.length}</span>
+        <button id="btnNext" style="background:none; border:none; color:white; font-size:1.5em; cursor:pointer;">❯</button>
+        <button id="btnExit" style="background:#ff4444; border:none; color:white; padding:5px 15px; border-radius:15px; cursor:pointer; margin-left:10px;">Exit</button>
+    `;
+    document.body.appendChild(div);
+
+    const btnPrev = div.querySelector('#btnPrev');
+    const btnNext = div.querySelector('#btnNext');
+    const btnExit = div.querySelector('#btnExit');
+    const counter = div.querySelector('#moveCounter');
+
+    const updateBoardToStep = (index) => {
+        // Reconstruct board from history
+        // This is tricky because history stores *moves*, not full states usually.
+        // But our firebase.js sendState stores FULL STATE in history array!
+        // Let's check game.js... wait, game.js history stores MOVE DETAILS.
+        // Firebase history stores FULL STATE.
+        // Let's use the local history from game.js which we added.
+        // Wait, game.js history stores { from, to, piece, captured, turn }.
+        // Replaying from that requires re-simulating from start.
+        // EASIER: Use the history from Firebase which has full board state?
+        // OR: Just re-simulate.
+
+        // Let's try re-simulating from initial state.
+        // Actually, `replayHistory` comes from `getGameState().history`.
+        // In `game.js`, we added `history` which stores move records.
+        // We need to rebuild the board state at step `index`.
+
+        // 1. Reset to initial board
+        // We need `initBoard` logic but we don't want to mess up the actual game `board` variable if we can avoid it.
+        // But `update3DBoard` reads from `getGameState().board`.
+        // So we MUST modify the local board to show it.
+        // But we are in replay mode, so it's fine.
+
+        // Actually, let's just use the `history` array from `game.js` to replay moves.
+        // We need a function to set board to a specific state.
+
+        // Better approach:
+        // 1. Get initial board.
+        // 2. Apply moves 0 to index-1.
+        // 3. Update 3D board.
+
+        // We need `initBoard` from game.js exposed or importable. It is exported.
+        // But we need to know if it was Blind Chess setup...
+        // If Blind Chess, the initial board was custom.
+        // We might not have the initial custom board stored in history if we only store moves!
+        // Ah, `game.js` history only stores moves.
+        // If we want to replay Blind Chess, we need the initial state.
+        // `firebase.js` stores `history` as an array of STATES.
+        // Maybe we should fetch the full history from Firebase for replay?
+        // That would be more robust.
+
+        // For now, let's assume we can use the local `history` if we are just reviewing the game we just played.
+        // But wait, if we are in Blind Chess, `initBoard` gives standard setup.
+        // We need the *actual* starting board.
+        // Does `game.js` store the initial board? No.
+
+        // Alternative: Use `firebase.js` history which stores full board snapshots!
+        // `sendState` in `firebase.js` pushes `{ board, turn, lastMove }` to `history`.
+        // So we should fetch that.
+
+        firebase.database().ref(`rooms/${roomId}/game/history`).once('value').then(snap => {
+            const serverHistory = snap.val() || [];
+            if (serverHistory.length > 0) {
+                const state = serverHistory[index - 1]; // History is 1-based (move 1, move 2...)
+                // Wait, index 0 is start? No, history pushes *after* move.
+                // So index 0 is state after move 1.
+                // We need state at index.
+                // If index == 0, we need initial state.
+                // Server history doesn't store initial state usually, only updates.
+                // Actually `sendState` is called after move.
+
+                // Let's try to use the server history.
+                if (index === 0) {
+                    // We need initial state.
+                    // If we don't have it, we can't show it easily for Blind Chess.
+                    // But wait, `startBlindGame` calls `sendState(getGameState())` initially!
+                    // So index 0 SHOULD be the initial state!
+                    const state = serverHistory[0];
+                    if (state) update3DBoard(state.board);
+                } else {
+                    const state = serverHistory[index]; // index is 0-based in array
+                    // if index is 5 (show move 5), we want history[4]?
+                    // If history[0] is initial state.
+                    // history[1] is after move 1.
+                    // So index 0 -> history[0] (Initial)
+                    // index 1 -> history[1] (After move 1)
+                    if (state) {
+                        update3DBoard(state.board);
+                        // Highlight last move
+                        if (state.lastMove) {
+                            // Manually highlight because update3DBoard uses getGameState().lastMove
+                            // We can temporarily hack getGameState or pass lastMove to update3DBoard
+                            // Let's modify update3DBoard to accept lastMove optional
+                        }
+                    }
+                }
+            }
+        });
+    };
+
+    // We need to modify update3DBoard to take lastMove as arg or we set it in game state.
+    // Let's just fetch from firebase for now.
+
+    firebase.database().ref(`rooms/${roomId}/game/history`).once('value').then(snap => {
+        const serverHistory = snap.val() || [];
+        replayHistory = serverHistory;
+        replayIndex = replayHistory.length - 1; // Show last state
+
+        const showState = (idx) => {
+            if (idx < 0) idx = 0;
+            if (idx >= replayHistory.length) idx = replayHistory.length - 1;
+            replayIndex = idx;
+            counter.innerText = `${replayIndex + 1} / ${replayHistory.length}`;
+
+            const state = replayHistory[replayIndex];
+            if (state) {
+                // We need to update the visual board
+                // But update3DBoard reads from `getGameState().lastMove` for highlighting.
+                // We should probably update the local `game.js` state to match replay state so `update3DBoard` works.
+                applyGameState(state); // This updates board, turn, lastMove
+                update3DBoard(state.board);
+            }
+        };
+
+        showState(replayIndex);
+
+        btnPrev.onclick = () => showState(replayIndex - 1);
+        btnNext.onclick = () => showState(replayIndex + 1);
+
+        // Keyboard support
+        const keyHandler = (e) => {
+            if (e.key === 'ArrowLeft') showState(replayIndex - 1);
+            if (e.key === 'ArrowRight') showState(replayIndex + 1);
+        };
+        window.addEventListener('keydown', keyHandler);
+
+        btnExit.onclick = () => {
+            div.remove();
+            window.removeEventListener('keydown', keyHandler);
+            showGameOverScreen(checkVictoryCondition(getGameState().board, gameMode) || 'white'); // Show menu again
+        };
+    });
 }
