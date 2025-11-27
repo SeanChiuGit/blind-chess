@@ -40,22 +40,6 @@ const glassMat = new THREE.MeshPhysicalMaterial({
     color: 0xffffff, metalness: 0.1, roughness: 0.05, transmission: 0.9, thickness: 1.0, transparent: true, opacity: 1.0
 });
 
-// --- Debug Logger ---
-function logToScreen(msg, type = 'info') {
-    const consoleDiv = document.getElementById('debug-console');
-    if (consoleDiv) {
-        const span = document.createElement('div');
-        span.style.color = type === 'error' ? '#ff5555' : '#55ff55';
-        span.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
-        consoleDiv.appendChild(span);
-        consoleDiv.scrollTop = consoleDiv.scrollHeight;
-    }
-}
-const originalLog = console.log;
-const originalError = console.error;
-console.log = (...args) => { originalLog(...args); logToScreen(args.join(' ')); };
-console.error = (...args) => { originalError(...args); logToScreen(args.join(' '), 'error'); };
-
 // --- Initialization ---
 init();
 animate();
@@ -125,15 +109,15 @@ function create3DUI() {
     div.style.textAlign = 'center';
     div.style.color = 'white';
     div.style.fontFamily = "'Inter', sans-serif";
-    div.style.pointerEvents = 'auto'; // Ensure clickable
+    div.style.pointerEvents = 'none'; // Allow clicks to pass through background
 
     div.innerHTML = `
         <h1 style="margin: 0 0 20px 0; font-weight: 300; letter-spacing: 2px;">BLIND CHESS 3D</h1>
         <input id="roomInput" type="text" placeholder="Enter Room ID" style="
-            width: 80%; padding: 10px; margin-bottom: 15px; border-radius: 5px; border: none; outline: none; background: rgba(255,255,255,0.9); color: #333;">
+            width: 80%; padding: 10px; margin-bottom: 15px; border-radius: 5px; border: none; outline: none; background: rgba(255,255,255,0.9); color: #333; pointer-events: auto;">
         <br>
         <button id="joinBtn" style="
-            padding: 10px 30px; background: #00aaff; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.2s;">
+            padding: 10px 30px; background: #00aaff; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.2s; pointer-events: auto;">
             JOIN ROOM
         </button>
         <p id="status" style="margin-top: 15px; font-size: 0.9em; color: #aaa;">Ready to connect...</p>
@@ -221,16 +205,16 @@ function show3DModeSelection(roomId, slot) {
     div.style.textAlign = 'center';
     div.style.color = 'white';
     div.style.fontFamily = "'Inter', sans-serif";
-    div.style.pointerEvents = 'auto';
+    div.style.pointerEvents = 'none';
 
     div.innerHTML = `
         <h2 style="margin: 0 0 20px 0; font-weight: 300;">SELECT GAME MODE</h2>
         <button id="btnClassic" style="
-            width: 100%; padding: 12px; margin-bottom: 10px; background: #00aaff; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">
+            width: 100%; padding: 12px; margin-bottom: 10px; background: #00aaff; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; pointer-events: auto;">
             CLASSIC CHESS
         </button>
         <button id="btnBlind" style="
-            width: 100%; padding: 12px; margin-bottom: 10px; background: #aa00ff; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">
+            width: 100%; padding: 12px; margin-bottom: 10px; background: #aa00ff; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; pointer-events: auto;">
             BLIND CHESS (Hidden)
         </button>
     `;
