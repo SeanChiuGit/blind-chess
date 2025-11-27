@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Firebase Test</title>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+</head>
+
+<body>
+    <h1>Firebase Connection Test</h1>
+    <div id="output">Testing...</div>
+    <script type="module">
+        const firebaseConfig = {
+            apiKey: "AIzaSyDVjCCy7j80N7-VbPTicZeIqK2bu9Gik3c",
+            authDomain: "blindchess-fa5f0.firebaseapp.com",
+            databaseURL: "https://blindchess-fa5f0-default-rtdb.firebaseio.com",
+            projectId: "blindchess-fa5f0",
+            storageBucket: "blindchess-fa5f0.firebasestorage.app",
+            messagingSenderId: "971675007996",
+            appId: "1:971675007996:web:cb3e58abbea388aadc5079"
+        };
+
+        try {
+            firebase.initializeApp(firebaseConfig);
+            const db = firebase.database();
+            const ref = db.ref("test_connection");
+
+            document.getElementById('output').innerText += "\nAttempting to write...";
+
+            ref.set({ timestamp: Date.now() })
+                .then(() => {
+                    document.getElementById('output').innerText += "\n✅ Write Successful!";
+                    console.log("Write Successful");
+                })
+                .catch((error) => {
+                    document.getElementById('output').innerText += "\n❌ Write Failed: " + error.message;
+                    console.error("Write Failed", error);
+                });
+
+        } catch (e) {
+            document.getElementById('output').innerText += "\n❌ Init Failed: " + e.message;
+        }
+    </script>
+</body>
+
+</html>

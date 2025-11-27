@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>BlindChess 3D Diagnostic</title>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            background: #1e1e1e;
+            color: #0f0;
+        }
+
+        #log {
+            white-space: pre-wrap;
+        }
+
+        .error {
+            color: #ff3333;
+        }
+
+        .success {
+            color: #33ff33;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>3D Version Diagnostic</h1>
+    <p>Room ID: <input type="text" id="roomId" value="diag_test_1"> <button onclick="runTest()">Run Test</button></p>
+    <div id="log"></div>
+
+    <script type="module">
+        import { initFirebase, assignPlayerColor } from './firebase.js';
+
+        const logDiv = document.getElementById('log');
+        function log(msg, type = '') {
+            const span = document.createElement('div');
+            span.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+            if (type) span.className = type;
+            logDiv.appendChild(span);
+        }
+
+        window.runTest = async function () {
+            log("Starting test...", 'info');
+            const rId = document.getElementById('roomId').value;
+
+            try {
+                log("1. Initializing Firebase...");
+                if (typeof firebase === 'undefined') throw new Error("Firebase global not found!");
+                initFirebase();
+                log("Firebase initialized.", 'success');
+
+                log(`2. Attempting to join/create room: ${rId}...`);
+                const result = await assignPlayerColor(rId);
+
+                if (result) {
+                    log(`Success! Joined as ${result.color} (${result.slot})`, 'success');
+                    log("Database write appears successful.");
+                } else {
+                    log("Room is full (or returned null).", 'error');
+                }
+
+            } catch (e) {
+                log(`ERROR: ${e.message}`, 'error');
+                console.error(e);
+            }
+        };
+    </script>
+</body>
+
+</html>
