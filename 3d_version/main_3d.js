@@ -50,7 +50,7 @@ const glassMat = new THREE.MeshPhysicalMaterial({
 
 // --- Initialization ---
 init();
-animate();
+
 
 function init() {
     // 1. Scene Setup
@@ -73,42 +73,36 @@ function init() {
     document.getElementById('css-container').appendChild(cssRenderer.domElement);
 
     // Create SkyDome (Inside a sphere effect)
-    const loader = new THREE.TextureLoader();
-    const texture = loader.load('/assets/skybox_texture_v3.png');
-    texture.colorSpace = THREE.SRGBColorSpace;
-    texture.minFilter = THREE.LinearFilter;
-    texture.magFilter = THREE.LinearFilter;
-    texture.generateMipmaps = false;
-    // Maximize texture quality
-    const maxAnisotropy = renderer.capabilities.getMaxAnisotropy();
-    texture.anisotropy = maxAnisotropy;
+    // Create Procedural Environment (Unity-style 3D Scene)
+    createProceduralEnvironment();
 
-    const skyGeo = new THREE.SphereGeometry(500, 60, 40);
-    // Invert the geometry to make it viewable from inside
-    skyGeo.scale(-1, 1, 1);
-
-    const skyMat = new THREE.MeshBasicMaterial({
-        map: texture
-    });
-
-    const skyMesh = new THREE.Mesh(skyGeo, skyMat);
-    scene.add(skyMesh);
-
-    camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 12, 18); // Initial view for menu
+    // Adjust camera for new scale
+    camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 2000);
+    camera.position.set(0, 25, 35); // Higher and further back to see the landscape
     camera.lookAt(0, 0, 0);
 
-    // 3. Lights
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+    // 3. Lights (Enhanced for outdoor scene)
+    const ambientLight = new THREE.AmbientLight(0xcceeff, 0.4); // Blue-ish ambient
     scene.add(ambientLight);
-    const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
-    dirLight.position.set(5, 10, 5);
+
+    const dirLight = new THREE.DirectionalLight(0xffddaa, 1.5); // Warm sun
+    dirLight.position.set(50, 100, 50);
     dirLight.castShadow = true;
+    dirLight.shadow.mapSize.width = 2048;
+    dirLight.shadow.mapSize.height = 2048;
+    dirLight.shadow.camera.near = 0.5;
+    dirLight.shadow.camera.far = 500;
+    dirLight.shadow.camera.left = -100;
+    dirLight.shadow.camera.right = 100;
+    dirLight.shadow.camera.top = 100;
+    dirLight.shadow.camera.bottom = -100;
     scene.add(dirLight);
 
+    // Add Fog for depth
+    scene.fog = new THREE.FogExp2(0xddeeff, 0.002);
+    scene.background = new THREE.Color(0xddeeff);
+
     // 4. Controls
-    // Attach to renderer.domElement to allow dragging the scene.
-    // CSS3D elements will still be clickable because they are 'on top' and have pointer-events: auto.
     controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.maxPolarAngle = Math.PI / 2 - 0.05;
@@ -123,6 +117,176 @@ function init() {
     // 7. Event Listeners
     window.addEventListener('resize', onWindowResize);
     window.addEventListener('click', onMouseClick);
+
+    // Start Animation Loop
+    animate();
+}
+
+function createProceduralEnvironment() {
+    // 1. Terrain Generation
+    const planeGeo = new THREE.PlaneGeometry(1000, 1000, 128, 128);
+    const posAttribute = planeGeo.attributes.position;
+
+    // Simple noise function for terrain
+    for (let i = 0; i < posAttribute.count; i++) {
+        const x = posAttribute.getX(i);
+        const y = posAttribute.getY(i);
+
+        // Create a valley in the center (where the board is)
+        const distFromCenter = Math.sqrt(x * x + y * y);
+        let height = 0;
+
+        if (distFromCenter > 30) {
+            // Mountains start further out
+            height = Math.sin(x * 0.02) * Math.cos(y * 0.02) * 20 + Math.random() * 2;
+            height += Math.sin(x * 0.005) * Math.cos(y * 0.005) * 50;
+
+            // Make mountains higher in the back
+            if (y < -50) height += Math.abs(y) * 0.5;
+        }
+
+        // Flatten center
+        if (distFromCenter < 50) height *= (distFromCenter / 50);
+
+        posAttribute.setZ(i, height - 10); // Lower everything so board is on top
+    }
+
+    planeGeo.computeVertexNormals();
+
+    const terrainMat = new THREE.MeshStandardMaterial({
+        color: 0x3b5e3b, // Forest Green
+        roughness: 0.8,
+        metalness: 0.1,
+        flatShading: true
+    });
+
+    const terrain = new THREE.Mesh(planeGeo, terrainMat);
+    terrain.rotation.x = -Math.PI / 2;
+    terrain.receiveShadow = true;
+    scene.add(terrain);
+
+    // 2. Water Plane
+    const waterGeo = new THREE.PlaneGeometry(1000, 1000);
+    const waterMat = new THREE.MeshStandardMaterial({
+        color: 0x0077be,
+        transparent: true,
+        opacity: 0.6,
+        roughness: 0.1,
+        metalness: 0.8
+    });
+    const water = new THREE.Mesh(waterGeo, waterMat);
+    water.rotation.x = -Math.PI / 2;
+    water.position.y = -8; // Water level
+    scene.add(water);
+
+    // 3. Trees (InstancedMesh for performance)
+    const treeCount = 800;
+    const trunkGeo = new THREE.CylinderGeometry(0.5, 0.8, 3, 6);
+    const trunkMat = new THREE.MeshStandardMaterial({ color: 0x4a3c31 });
+    const leavesGeo = new THREE.ConeGeometry(3, 7, 6);
+    const leavesMat = new THREE.MeshStandardMaterial({ color: 0x1e4d2b });
+
+    const trunkMesh = new THREE.InstancedMesh(trunkGeo, trunkMat, treeCount);
+    const leavesMesh = new THREE.InstancedMesh(leavesGeo, leavesMat, treeCount);
+
+    const dummy = new THREE.Object3D();
+    const raycaster = new THREE.Raycaster();
+    const down = new THREE.Vector3(0, -1, 0);
+
+    // Ensure terrain world matrix is updated for raycasting
+    terrain.updateMatrixWorld();
+
+    let index = 0;
+    let attempts = 0;
+
+    while (index < treeCount && attempts < treeCount * 2) {
+        attempts++;
+
+        const angle = Math.random() * Math.PI * 2;
+        const radius = 60 + Math.random() * 400; // Trees start 60 units away
+        const x = Math.cos(angle) * radius;
+        const z = Math.sin(angle) * radius;
+
+        // Raycast to find ground height
+        raycaster.set(new THREE.Vector3(x, 200, z), down);
+        const intersects = raycaster.intersectObject(terrain);
+
+        if (intersects.length > 0) {
+            const point = intersects[0].point;
+
+            if (point.y < -5) continue; // Don't plant trees underwater
+
+            // Trunk
+            dummy.position.set(point.x, point.y + 1.5, point.z);
+            dummy.scale.set(1, 1, 1);
+            dummy.rotation.set(0, Math.random() * Math.PI, 0);
+            dummy.updateMatrix();
+            trunkMesh.setMatrixAt(index, dummy.matrix);
+
+            // Leaves
+            dummy.position.set(point.x, point.y + 5, point.z);
+            dummy.scale.set(1 + Math.random() * 0.5, 1 + Math.random() * 0.5, 1 + Math.random() * 0.5);
+            dummy.updateMatrix();
+            leavesMesh.setMatrixAt(index, dummy.matrix);
+
+            index++;
+        }
+    }
+
+    trunkMesh.count = index;
+    leavesMesh.count = index;
+    trunkMesh.castShadow = true;
+    trunkMesh.receiveShadow = true;
+    leavesMesh.castShadow = true;
+    leavesMesh.receiveShadow = true;
+
+    scene.add(trunkMesh);
+    scene.add(leavesMesh);
+
+    // 4. Waterfall (Particle System)
+    const particleCount = 2000;
+    const particlesGeo = new THREE.BufferGeometry();
+    const particlePositions = new Float32Array(particleCount * 3);
+    const particleSpeeds = new Float32Array(particleCount);
+
+    // Waterfall location
+    const wfX = 0;
+    const wfY = 40;
+    const wfZ = -120;
+
+    for (let i = 0; i < particleCount; i++) {
+        particlePositions[i * 3] = wfX + (Math.random() - 0.5) * 10;
+        particlePositions[i * 3 + 1] = wfY + Math.random() * 40;
+        particlePositions[i * 3 + 2] = wfZ + (Math.random() - 0.5) * 5;
+        particleSpeeds[i] = 0.5 + Math.random() * 0.5;
+    }
+
+    particlesGeo.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
+
+    const particlesMat = new THREE.PointsMaterial({
+        color: 0xaaddff,
+        size: 0.8,
+        transparent: true,
+        opacity: 0.6
+    });
+
+    const waterfall = new THREE.Points(particlesGeo, particlesMat);
+    waterfall.userData = { speeds: particleSpeeds, initialY: wfY };
+    scene.add(waterfall);
+
+    // Animation loop for waterfall
+    const animateWaterfall = () => {
+        const positions = waterfall.geometry.attributes.position.array;
+        for (let i = 0; i < particleCount; i++) {
+            positions[i * 3 + 1] -= waterfall.userData.speeds[i];
+            if (positions[i * 3 + 1] < -8) { // Reset if hits water
+                positions[i * 3 + 1] = waterfall.userData.initialY;
+            }
+        }
+        waterfall.geometry.attributes.position.needsUpdate = true;
+        requestAnimationFrame(animateWaterfall);
+    };
+    animateWaterfall();
 }
 
 // --- 3D UI Construction ---
@@ -879,7 +1043,7 @@ function onWindowResize() {
 function animate() {
     requestAnimationFrame(animate);
     TWEEN.update();
-    controls.update();
+    if (controls) controls.update();
 
     // Animate Floating Question Marks
     const time = Date.now() * 0.001;
