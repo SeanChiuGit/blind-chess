@@ -253,16 +253,24 @@ function createProceduralEnvironment() {
     const particlePositions = new Float32Array(particleCount * 3);
     const particleSpeeds = new Float32Array(particleCount);
 
-    // Waterfall location (Moved further back to hit mountains)
+    // Waterfall location
     const wfX = 80;
-    const wfY = 160;
     const wfZ = -320;
+    let wfY = 100; // Default fallback
+
+    // Find exact terrain height for waterfall start
+    raycaster.set(new THREE.Vector3(wfX, 500, wfZ), down);
+    const wfIntersects = raycaster.intersectObject(terrain);
+    if (wfIntersects.length > 0) {
+        wfY = wfIntersects[0].point.y;
+    }
 
     for (let i = 0; i < particleCount; i++) {
-        particlePositions[i * 3] = wfX + (Math.random() - 0.5) * 30;
-        particlePositions[i * 3 + 1] = wfY + Math.random() * 100; // Initial spread
-        particlePositions[i * 3 + 2] = wfZ + (Math.random() - 0.5) * 20;
-        particleSpeeds[i] = 1.0 + Math.random() * 1.0; // Faster water
+        particlePositions[i * 3] = wfX + (Math.random() - 0.5) * 20;
+        // Start particles along the fall, not just at top
+        particlePositions[i * 3 + 1] = wfY - Math.random() * (wfY + 8);
+        particlePositions[i * 3 + 2] = wfZ + (Math.random() - 0.5) * 10;
+        particleSpeeds[i] = 0.5 + Math.random() * 1.0;
     }
 
     particlesGeo.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
@@ -278,6 +286,22 @@ function createProceduralEnvironment() {
     const waterfall = new THREE.Points(particlesGeo, particlesMat);
     waterfall.userData = { speeds: particleSpeeds, initialY: wfY };
     scene.add(waterfall);
+
+    // Add Rocks near water
+    const rockGeo = new THREE.DodecahedronGeometry(1, 0);
+    const rockMat = new THREE.MeshStandardMaterial({ color: 0x555555, roughness: 0.9 });
+
+    for (let i = 0; i < 15; i++) {
+        const rock = new THREE.Mesh(rockGeo, rockMat);
+        const rAngle = Math.random() * Math.PI * 2;
+        const rDist = 20 + Math.random() * 30;
+        rock.position.set(Math.cos(rAngle) * rDist, -8, Math.sin(rAngle) * rDist);
+        rock.scale.set(2 + Math.random(), 1 + Math.random(), 2 + Math.random());
+        rock.rotation.set(Math.random(), Math.random(), Math.random());
+        rock.castShadow = true;
+        rock.receiveShadow = true;
+        scene.add(rock);
+    }
 
     // 5. Fireflies (Floating Particles)
     const fireflyCount = 200;
