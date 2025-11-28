@@ -253,44 +253,83 @@ function createProceduralEnvironment() {
     const particlePositions = new Float32Array(particleCount * 3);
     const particleSpeeds = new Float32Array(particleCount);
 
-    // Waterfall location
-    const wfX = 0;
-    const wfY = 40;
-    const wfZ = -120;
+    // Waterfall location (Moved further back to hit mountains)
+    const wfX = 80;
+    const wfY = 160;
+    const wfZ = -320;
 
     for (let i = 0; i < particleCount; i++) {
-        particlePositions[i * 3] = wfX + (Math.random() - 0.5) * 10;
-        particlePositions[i * 3 + 1] = wfY + Math.random() * 40;
-        particlePositions[i * 3 + 2] = wfZ + (Math.random() - 0.5) * 5;
-        particleSpeeds[i] = 0.5 + Math.random() * 0.5;
+        particlePositions[i * 3] = wfX + (Math.random() - 0.5) * 30;
+        particlePositions[i * 3 + 1] = wfY + Math.random() * 100; // Initial spread
+        particlePositions[i * 3 + 2] = wfZ + (Math.random() - 0.5) * 20;
+        particleSpeeds[i] = 1.0 + Math.random() * 1.0; // Faster water
     }
 
     particlesGeo.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
 
     const particlesMat = new THREE.PointsMaterial({
         color: 0xaaddff,
-        size: 0.8,
+        size: 1.5,
         transparent: true,
-        opacity: 0.6
+        opacity: 0.6,
+        blending: THREE.AdditiveBlending
     });
 
     const waterfall = new THREE.Points(particlesGeo, particlesMat);
     waterfall.userData = { speeds: particleSpeeds, initialY: wfY };
     scene.add(waterfall);
 
-    // Animation loop for waterfall
-    const animateWaterfall = () => {
+    // 5. Fireflies (Floating Particles)
+    const fireflyCount = 200;
+    const fireflyGeo = new THREE.BufferGeometry();
+    const fireflyPos = new Float32Array(fireflyCount * 3);
+
+    for (let i = 0; i < fireflyCount; i++) {
+        fireflyPos[i * 3] = (Math.random() - 0.5) * 300;
+        fireflyPos[i * 3 + 1] = Math.random() * 30;
+        fireflyPos[i * 3 + 2] = (Math.random() - 0.5) * 300;
+    }
+
+    fireflyGeo.setAttribute('position', new THREE.BufferAttribute(fireflyPos, 3));
+    const fireflyMat = new THREE.PointsMaterial({
+        color: 0xffff00,
+        size: 0.8,
+        transparent: true,
+        opacity: 0.8,
+        blending: THREE.AdditiveBlending
+    });
+
+    const fireflies = new THREE.Points(fireflyGeo, fireflyMat);
+    scene.add(fireflies);
+
+    // 6. Under-Board Glow
+    const underLight = new THREE.PointLight(0x00ffff, 2, 100);
+    underLight.position.set(0, -5, 0);
+    scene.add(underLight);
+
+    // Animation loop for waterfall & fireflies
+    const animateEnvironment = () => {
+        // Waterfall
         const positions = waterfall.geometry.attributes.position.array;
         for (let i = 0; i < particleCount; i++) {
             positions[i * 3 + 1] -= waterfall.userData.speeds[i];
             if (positions[i * 3 + 1] < -8) { // Reset if hits water
-                positions[i * 3 + 1] = waterfall.userData.initialY;
+                positions[i * 3 + 1] = waterfall.userData.initialY + Math.random() * 20;
             }
         }
         waterfall.geometry.attributes.position.needsUpdate = true;
-        requestAnimationFrame(animateWaterfall);
+
+        // Fireflies
+        const ffPos = fireflies.geometry.attributes.position.array;
+        const time = Date.now() * 0.001;
+        for (let i = 0; i < fireflyCount; i++) {
+            ffPos[i * 3 + 1] += Math.sin(time + i) * 0.05; // Bob up and down
+        }
+        fireflies.geometry.attributes.position.needsUpdate = true;
+
+        requestAnimationFrame(animateEnvironment);
     };
-    animateWaterfall();
+    animateEnvironment();
 }
 
 // --- 3D UI Construction ---
