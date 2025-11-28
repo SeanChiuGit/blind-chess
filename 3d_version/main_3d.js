@@ -82,10 +82,14 @@ function init() {
     camera.lookAt(0, 0, 0);
 
     // 3. Lights (Enhanced for outdoor scene)
-    const ambientLight = new THREE.AmbientLight(0xcceeff, 0.4); // Blue-ish ambient
+    const ambientLight = new THREE.AmbientLight(0xcceeff, 0.7); // Brighter ambient
     scene.add(ambientLight);
 
-    const dirLight = new THREE.DirectionalLight(0xffddaa, 1.5); // Warm sun
+    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.8); // Sky/Ground ambient
+    hemiLight.position.set(0, 200, 0);
+    scene.add(hemiLight);
+
+    const dirLight = new THREE.DirectionalLight(0xffddaa, 2.5); // Bright sun
     dirLight.position.set(50, 100, 50);
     dirLight.castShadow = true;
     dirLight.shadow.mapSize.width = 2048;
@@ -105,7 +109,7 @@ function init() {
     // 4. Controls
     controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
-    controls.maxPolarAngle = Math.PI / 2 - 0.05;
+    controls.maxPolarAngle = Math.PI; // Full vertical rotation
 
     // 5. Build World
     buildBoard();
