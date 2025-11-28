@@ -74,7 +74,7 @@ function init() {
 
     // Create SkyDome (Inside a sphere effect)
     const loader = new THREE.TextureLoader();
-    const texture = loader.load('../assets/skybox_texture_v3.png');
+    const texture = loader.load('/assets/skybox_texture_v3.png');
     texture.colorSpace = THREE.SRGBColorSpace;
     texture.minFilter = THREE.LinearFilter;
     texture.magFilter = THREE.LinearFilter;
