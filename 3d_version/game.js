@@ -66,6 +66,36 @@ export function movePiece(from, to) {
   return { board, turn, lastMove, history };
 }
 
+export function undoLastMove() {
+  if (!history || history.length === 0) return null;
+
+  // Pop the current state (the one we want to undo)
+  history.pop();
+
+  let newBoard, newTurn, newLastMove;
+
+  if (history.length === 0) {
+    // Revert to initial state
+    // Note: We need to ensure IDs are consistent if possible, but initBoard generates new ones.
+    // For 3D view this is fine as it redraws.
+    // For logic, as long as pieces are correct type/color/pos, it's fine.
+    newBoard = initBoard();
+    newTurn = 'white';
+    newLastMove = null;
+  } else {
+    const prevState = history[history.length - 1];
+    newBoard = prevState.board;
+    newTurn = prevState.turn;
+    newLastMove = prevState.lastMove;
+  }
+
+  board = newBoard;
+  turn = newTurn;
+  lastMove = newLastMove;
+
+  return { board, turn, lastMove, history };
+}
+
 export function getGameState() {
   return { board, turn, lastMove, history };
 }

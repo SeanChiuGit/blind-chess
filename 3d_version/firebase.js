@@ -35,28 +35,32 @@ export function createOrJoinRoom(roomId, onData) {
   return () => roomRef.off("value", handler);
 }
 
-export function sendState(state) {
+export function sendState(state, forceUpdate = false) {
   if (!roomRef) return;
 
-  roomRef.child("game").transaction((current) => {
-    if (!current) current = {};
-    // 初始化历史数组
-    if (!current.history) current.history = [];
+  if (forceUpdate) {
+    roomRef.child("game").set(state);
+  } else {
+    roomRef.child("game").transaction((current) => {
+      if (!current) current = {};
+      // 初始化历史数组
+      if (!current.history) current.history = [];
 
-    const nextState = {
-      board: state.board,
-      turn: state.turn,
-      lastMove: state.lastMove || null
-    };
+      const nextState = {
+        board: state.board,
+        turn: state.turn,
+        lastMove: state.lastMove || null
+      };
 
-    // 把这一步加入历史
-    current.history.push(nextState);
-    current.board = nextState.board;
-    current.turn = nextState.turn;
-    current.lastMove = nextState.lastMove;
+      // 把这一步加入历史
+      current.history.push(nextState);
+      current.board = nextState.board;
+      current.turn = nextState.turn;
+      current.lastMove = nextState.lastMove;
 
-    return current;
-  });
+      return current;
+    });
+  }
 }
 
 export async function assignPlayerColor(roomId) {

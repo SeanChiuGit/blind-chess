@@ -5,7 +5,7 @@ import TWEEN from 'https://unpkg.com/@tweenjs/tween.js@23.1.2/dist/tween.esm.js'
 
 // Import Game Logic
 import { initFirebase, createOrJoinRoom, sendState, assignPlayerColor, onStateChange, submitPlayerModeChoice, onBothModesSelectedAndMatched, onBothKingsSelected, onBothSetupsReady, requestRematch, onRematchStateChange, resetRoomForRematch } from './firebase.js';
-import { initGame, getGameState, applyGameState, turn, playerColor, setBoard, movePiece } from './game.js';
+import { initGame, getGameState, applyGameState, turn, playerColor, setBoard, movePiece, undoLastMove } from './game.js';
 import { checkVictoryCondition, getValidMoves } from './rules.js';
 import { enterDarkChessSetup, localGuesses } from './darkChessSetup.js';
 import { selectKing } from './hiddenking.js';
@@ -247,45 +247,7 @@ function createProceduralEnvironment() {
     scene.add(trunkMesh);
     scene.add(leavesMesh);
 
-    // 4. Waterfall (Particle System)
-    const particleCount = 2000;
-    const particlesGeo = new THREE.BufferGeometry();
-    const particlePositions = new Float32Array(particleCount * 3);
-    const particleSpeeds = new Float32Array(particleCount);
 
-    // Waterfall location
-    const wfX = 80;
-    const wfZ = -320;
-    let wfY = 100; // Default fallback
-
-    // Find exact terrain height for waterfall start
-    raycaster.set(new THREE.Vector3(wfX, 500, wfZ), down);
-    const wfIntersects = raycaster.intersectObject(terrain);
-    if (wfIntersects.length > 0) {
-        wfY = wfIntersects[0].point.y;
-    }
-
-    for (let i = 0; i < particleCount; i++) {
-        particlePositions[i * 3] = wfX + (Math.random() - 0.5) * 20;
-        // Start particles along the fall, not just at top
-        particlePositions[i * 3 + 1] = wfY - Math.random() * (wfY + 8);
-        particlePositions[i * 3 + 2] = wfZ + (Math.random() - 0.5) * 10;
-        particleSpeeds[i] = 0.5 + Math.random() * 1.0;
-    }
-
-    particlesGeo.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
-
-    const particlesMat = new THREE.PointsMaterial({
-        color: 0xaaddff,
-        size: 1.5,
-        transparent: true,
-        opacity: 0.6,
-        blending: THREE.AdditiveBlending
-    });
-
-    const waterfall = new THREE.Points(particlesGeo, particlesMat);
-    waterfall.userData = { speeds: particleSpeeds, initialY: wfY };
-    scene.add(waterfall);
 
     // Add Rocks near water
     const rockGeo = new THREE.DodecahedronGeometry(1, 0);
@@ -333,15 +295,7 @@ function createProceduralEnvironment() {
 
     // Animation loop for waterfall & fireflies
     const animateEnvironment = () => {
-        // Waterfall
-        const positions = waterfall.geometry.attributes.position.array;
-        for (let i = 0; i < particleCount; i++) {
-            positions[i * 3 + 1] -= waterfall.userData.speeds[i];
-            if (positions[i * 3 + 1] < -8) { // Reset if hits water
-                positions[i * 3 + 1] = waterfall.userData.initialY + Math.random() * 20;
-            }
-        }
-        waterfall.geometry.attributes.position.needsUpdate = true;
+
 
         // Fireflies
         const ffPos = fireflies.geometry.attributes.position.array;
@@ -534,9 +488,14 @@ function startGameFlow(roomId, slot, color) {
         }
     });
     activeListeners.push(unsubMode);
+
+
 }
 
 function startClassicGame() {
+    // Add Game Controls
+    createGameControls();
+
     // Initial Render
     update3DBoard(getGameState().board);
 
@@ -553,7 +512,7 @@ function startClassicGame() {
         update3DBoard(gameState.board);
 
         // Check Game Over (Remote)
-        const gameOver = checkVictoryCondition(gameState.board, gameMode);
+        const gameOver = gameState.winner || checkVictoryCondition(gameState.board, gameMode);
         if (gameOver) {
             showGameOverScreen(gameOver);
         }
@@ -581,6 +540,9 @@ function startBlindGame() {
         // Initialize game
         setBoard(initialBoard);
 
+        // Add Game Controls
+        createGameControls();
+
         // Initial Render
         update3DBoard(getGameState().board);
 
@@ -597,7 +559,7 @@ function startBlindGame() {
             update3DBoard(gameState.board);
 
             // Check Game Over (Remote)
-            const gameOver = checkVictoryCondition(gameState.board, gameMode);
+            const gameOver = gameState.winner || checkVictoryCondition(gameState.board, gameMode);
             if (gameOver) {
                 showGameOverScreen(gameOver);
             }
@@ -605,6 +567,87 @@ function startBlindGame() {
         activeListeners.push(unsubState);
     });
     activeListeners.push(unsubSetup);
+}
+
+function createGameControls() {
+    const existing = document.getElementById('game-controls');
+    if (existing) existing.remove();
+
+    const div = document.createElement('div');
+    div.id = 'game-controls';
+    div.style.position = 'absolute';
+    div.style.bottom = '20px';
+    div.style.left = '50%';
+    div.style.transform = 'translateX(-50%)';
+    div.style.display = 'flex';
+    div.style.gap = '15px';
+    div.style.zIndex = '100';
+
+    const btnStyle = "padding: 10px 20px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; color: white; font-family: 'Inter', sans-serif; backdrop-filter: blur(5px); transition: 0.2s;";
+
+    const btnUndo = document.createElement('button');
+    btnUndo.innerText = "UNDO";
+    btnUndo.style.cssText = btnStyle + "background: rgba(255, 165, 0, 0.6); border: 1px solid rgba(255, 165, 0, 0.8);";
+
+    const btnSurrender = document.createElement('button');
+    btnSurrender.innerText = "SURRENDER";
+    btnSurrender.style.cssText = btnStyle + "background: rgba(255, 50, 50, 0.6); border: 1px solid rgba(255, 50, 50, 0.8);";
+
+    btnUndo.onmouseover = () => btnUndo.style.background = "rgba(255, 165, 0, 0.8)";
+    btnUndo.onmouseout = () => btnUndo.style.background = "rgba(255, 165, 0, 0.6)";
+
+    btnSurrender.onmouseover = () => btnSurrender.style.background = "rgba(255, 50, 50, 0.8)";
+    btnSurrender.onmouseout = () => btnSurrender.style.background = "rgba(255, 50, 50, 0.6)";
+
+    btnUndo.onclick = () => {
+        const state = getGameState();
+        // Condition: History exists, I made the last move, and it is currently opponent's turn.
+        // history[last] is the move record. history[last].turn is the player who moved.
+        if (state.history.length > 0 &&
+            state.history[state.history.length - 1].turn === myColor &&
+            state.turn !== myColor) {
+
+            const newState = undoLastMove();
+            if (newState) {
+                sendState(newState, true);
+                update3DBoard(newState.board);
+                console.log("Undo successful");
+            }
+        } else {
+            console.log("Cannot undo: Not your turn to undo or no history.");
+            // Optional: Visual feedback
+            btnUndo.style.transform = "translateX(-5px)";
+            setTimeout(() => btnUndo.style.transform = "translateX(5px)", 50);
+            setTimeout(() => btnUndo.style.transform = "translateX(0)", 100);
+        }
+    };
+
+    btnSurrender.onclick = () => {
+        // Change button to confirm
+        if (btnSurrender.innerText === "CONFIRM?") {
+            const winner = myColor === 'white' ? 'black' : 'white';
+            const state = getGameState();
+            // Send state with winner
+            sendState({ ...state, winner: winner }, true);
+            // Local update handled by onStateChange
+        } else {
+            btnSurrender.innerText = "CONFIRM?";
+            btnSurrender.style.background = "rgba(255, 0, 0, 0.9)";
+            setTimeout(() => {
+                btnSurrender.innerText = "SURRENDER";
+                btnSurrender.style.background = "rgba(255, 50, 50, 0.6)";
+            }, 3000);
+        }
+    };
+
+    div.appendChild(btnUndo);
+    div.appendChild(btnSurrender);
+    document.body.appendChild(div);
+}
+
+function removeGameControls() {
+    const existing = document.getElementById('game-controls');
+    if (existing) existing.remove();
 }
 
 // --- 3D Board Construction ---
@@ -673,7 +716,7 @@ function update3DBoard(boardState) {
                 const isOpponent = pieceData.color !== myColor;
 
                 // Blind Chess Logic
-                if (gameMode === 'blind_chess' && isOpponent) {
+                if (gameMode === 'blind_chess' && isOpponent && !replayMode) {
                     const guess = localGuesses[pieceData.id];
                     if (guess) {
                         renderType = guess;
@@ -703,14 +746,14 @@ function update3DBoard(boardState) {
     }
 
     // Highlight Last Move
-    if (getGameState().lastMove) {
+    if (getGameState().lastMove && !replayMode) {
         const { from, to } = getGameState().lastMove;
-        highlightSquare(from, 0xaaaa00, 0.5); // Yellowish for start
-        highlightSquare(to, 0xffff00, 0.5);   // Bright yellow for end
+        highlightSquare(from, 0xaaaa00, 0.5, 'lastMove'); // Yellowish for start
+        highlightSquare(to, 0xffff00, 0.5, 'lastMove');   // Bright yellow for end
     }
 }
 
-function highlightSquare(pos, colorHex, opacity = 0.5) {
+function highlightSquare(pos, colorHex, opacity = 0.5, type = 'selection') {
     // Convert algebraic to grid
     const file = pos.charAt(0);
     const rank = parseInt(pos.charAt(1));
@@ -726,14 +769,19 @@ function highlightSquare(pos, colorHex, opacity = 0.5) {
         highlight.position.copy(square.position);
         highlight.position.y = 0.05; // Slightly above board
         highlight.userData.isHighlight = true;
+        highlight.userData.highlightType = type;
         boardGroup.add(highlight);
     }
 }
 
-function clearHighlights() {
+function clearHighlights(excludeType = null) {
     for (let i = boardGroup.children.length - 1; i >= 0; i--) {
-        if (boardGroup.children[i].userData.isHighlight) {
-            boardGroup.remove(boardGroup.children[i]);
+        const child = boardGroup.children[i];
+        if (child.userData.isHighlight) {
+            if (excludeType && child.userData.highlightType === excludeType) {
+                continue;
+            }
+            boardGroup.remove(child);
         }
     }
 }
@@ -932,14 +980,15 @@ function onMouseClick(event) {
         // 2. Handle Selection (My Pieces)
         if (clickedPiece.userData.color === myColor && myTurn) {
             // Select Piece
+            // Select Piece
             selectedPiece = clickedPiece;
-            clearHighlights();
-            highlightSquare(getPosFromObj(selectedPiece), 0x00ff00); // Green for selected
+            clearHighlights('lastMove'); // Clear previous selection but keep last move
+            highlightSquare(getPosFromObj(selectedPiece), 0x00ff00, 0.5, 'selection'); // Green for selected
 
             // Calculate Valid Moves
             const moves = getValidMoves(getPosFromObj(selectedPiece), { type: selectedPiece.userData.realType, color: selectedPiece.userData.color }, getGameState().board);
             moves.forEach(pos => {
-                highlightSquare(pos, 0x0000ff, 0.3); // Blue for valid moves
+                highlightSquare(pos, 0x0000ff, 0.3, 'selection'); // Blue for valid moves
             });
 
             return;
@@ -1154,6 +1203,7 @@ function handleRematch(gameOverObject) {
 }
 
 function showGameOverScreen(winner) {
+    removeGameControls();
     const div = document.createElement('div');
     div.style.width = '400px';
     div.style.padding = '30px';
